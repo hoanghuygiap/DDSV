@@ -1,8 +1,8 @@
-import { useState, ReactNode } from "react"
+import { useState } from "react"
+import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
 import { 
   GraduationCap, 
   Plus, 
@@ -19,44 +19,54 @@ import {
   ClipboardList
 } from "lucide-react"
 
-// MENU DỮ LIỆU ĐƯỢC PHÂN THEO ROLE
+// MENU DỮ LIỆU ĐƯỢC PHÂN THEO ROLE VỚI ĐƯỜNG DẪN (PATH) CỤ THỂ
 const MENU_DATA = {
   admin: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
-    { id: "students", label: "Quản lý sinh viên", icon: Users },
-    { id: "lecturers", label: "Quản lý giảng viên", icon: Briefcase },
-    { id: "classes", label: "Quản lý lớp học", icon: School },
-    { id: "schedule", label: "Lịch học", icon: Calendar },
-    { id: "reports", label: "Báo cáo", icon: BarChart2 },
-    { id: "notifications", label: "Thông báo", icon: Bell },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle },
+    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "students", label: "Quản lý sinh viên", icon: Users, path: "/dashboard/students" },
+    { id: "lecturers", label: "Quản lý giảng viên", icon: Briefcase, path: "/dashboard/lecturers" },
+    { id: "classes", label: "Quản lý lớp học", icon: School, path: "/dashboard/classes" },
+    { id: "schedule", label: "Lịch học", icon: Calendar, path: "/dashboard/schedule" },
+    { id: "reports", label: "Báo cáo", icon: BarChart2, path: "/dashboard/reports" },
+    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
+    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
   ],
   lecturer: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
-    { id: "new_attendance", label: "Tạo điểm danh mới", icon: ClipboardCheck },
-    { id: "my_classes", label: "Lớp của tôi", icon: Users },
-    { id: "teaching_schedule", label: "Lịch dạy", icon: Calendar },
-    { id: "reports", label: "Báo cáo", icon: BarChart2 },
-    { id: "notifications", label: "Thông báo", icon: Bell },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle },
+    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "new_attendance", label: "Tạo điểm danh mới", icon: ClipboardCheck, path: "/dashboard/new-attendance" },
+    { id: "my_classes", label: "Lớp của tôi", icon: Users, path: "/dashboard/my-classes" },
+    { id: "teaching_schedule", label: "Lịch dạy", icon: Calendar, path: "/dashboard/teaching-schedule" },
+    { id: "reports", label: "Báo cáo", icon: BarChart2, path: "/dashboard/reports" },
+    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
+    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
   ],
   student: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard },
-    { id: "scan_qr", label: "Quét QR điểm danh", icon: QrCode },
-    { id: "schedule", label: "Lịch học", icon: Calendar },
-    { id: "attendance", label: "Chuyên cần", icon: ClipboardList },
-    { id: "notifications", label: "Thông báo", icon: Bell },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle },
+    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "scan_qr", label: "Quét QR điểm danh", icon: QrCode, path: "/dashboard/scan-qr" },
+    { id: "schedule", label: "Lịch học", icon: Calendar, path: "/dashboard/schedule" },
+    { id: "attendance", label: "Chuyên cần", icon: ClipboardList, path: "/dashboard/attendance" },
+    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
+    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
   ]
 }
 
 type Role = "admin" | "lecturer" | "student"
 
-export default function DashboardLayout({ children }: { children?: ReactNode }) {
+export default function DashboardLayout() {
   const [role, setRole] = useState<Role>("admin")
-  const [activeMenu, setActiveMenu] = useState("dashboard")
+  const location = useLocation()
 
   const currentMenu = MENU_DATA[role]
+  
+  // Tìm title của trang hiện tại dựa trên pathname
+  const activeMenuItem = currentMenu.find(item => {
+    if (item.path === "/dashboard") {
+      return location.pathname === "/dashboard"
+    }
+    return location.pathname.startsWith(item.path)
+  })
+  
+  const pageTitle = activeMenuItem?.label || "Bảng điều khiển"
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
@@ -76,10 +86,7 @@ export default function DashboardLayout({ children }: { children?: ReactNode }) 
 
         {/* ROLE TABS (For toggling UI in development) */}
         <div className="mb-6">
-          <Tabs value={role} onValueChange={(val) => {
-            setRole(val as Role)
-            setActiveMenu("dashboard")
-          }} className="w-full">
+          <Tabs value={role} onValueChange={(val) => setRole(val as Role)} className="w-full">
             <TabsList className="grid grid-cols-3 h-auto p-1 bg-slate-200/50">
               <TabsTrigger value="admin" className="text-xs py-2 data-[state=active]:bg-[#1e325c] data-[state=active]:text-white">Admin</TabsTrigger>
               <TabsTrigger value="lecturer" className="text-xs py-2 data-[state=active]:bg-[#1e325c] data-[state=active]:text-white">GV</TabsTrigger>
@@ -108,20 +115,24 @@ export default function DashboardLayout({ children }: { children?: ReactNode }) 
           <nav className="flex flex-col gap-1 pb-6">
             {currentMenu.map((item) => {
               const Icon = item.icon
-              const isActive = activeMenu === item.id
               return (
-                <button
+                <NavLink
                   key={item.id}
-                  onClick={() => setActiveMenu(item.id)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium transition-colors w-full text-left
+                  to={item.path}
+                  end={item.path === "/dashboard"}
+                  className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-md font-medium transition-colors w-full text-left
                     ${isActive 
                       ? "bg-[#1e325c] text-white shadow-md" 
                       : "text-slate-600 hover:bg-slate-100"
                     }`}
                 >
-                  <Icon size={20} className={isActive ? "text-white" : "text-slate-500"} />
-                  <span>{item.label}</span>
-                </button>
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={20} className={isActive ? "text-white" : "text-slate-500"} />
+                      <span>{item.label}</span>
+                    </>
+                  )}
+                </NavLink>
               )
             })}
           </nav>
@@ -134,7 +145,7 @@ export default function DashboardLayout({ children }: { children?: ReactNode }) 
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-slate-800">
-              {currentMenu.find(m => m.id === activeMenu)?.label || "Trang chủ"}
+              {pageTitle}
             </h2>
             <p className="text-sm text-slate-500">
               Khu vực làm việc dành cho {role === 'admin' ? 'Quản trị viên' : role === 'lecturer' ? 'Giảng viên' : 'Sinh viên'}
@@ -150,16 +161,10 @@ export default function DashboardLayout({ children }: { children?: ReactNode }) 
           </div>
         </header>
 
-        {/* PAGE CONTENT */}
+        {/* PAGE CONTENT - RENDERED BY REACT ROUTER OUTLET */}
         <ScrollArea className="flex-1 bg-slate-50">
           <div className="p-8 max-w-7xl mx-auto h-full">
-            {children ? children : (
-              <div className="border-4 border-dashed border-slate-200 rounded-xl h-[600px] flex flex-col items-center justify-center text-slate-400 bg-white/50">
-                <LayoutDashboard size={48} className="mb-4 opacity-50" />
-                <h3 className="text-xl font-bold text-slate-600">Phần Main (Nội dung trang)</h3>
-                <p>Nội dung của trang "{currentMenu.find(m => m.id === activeMenu)?.label}" sẽ hiển thị ở đây.</p>
-              </div>
-            )}
+            <Outlet />
           </div>
         </ScrollArea>
       </main>
