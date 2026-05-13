@@ -10,6 +10,7 @@ import ReportsPage from "@/pages/Reports"
 import ProfilePage from "@/pages/Profile"
 import LecturersPage from "@/pages/Lecturers"
 import ClassesPage from "@/pages/Classes"
+import NotificationsPage from "@/pages/Notifications"
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +56,10 @@ export const router = createBrowserRouter([
       {
         path: "reports",
         element: <ReportsPage />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationsPage />,
       },
       {
         path: "profile",
