@@ -3,54 +3,9 @@ import { NavLink, Outlet, useLocation } from "react-router-dom"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  GraduationCap, 
-  Plus, 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  BarChart2, 
-  UserCircle,
-  Briefcase,
-  School,
-  Bell,
-  ClipboardCheck,
-  QrCode,
-  ClipboardList
-} from "lucide-react"
-
-// MENU DỮ LIỆU ĐƯỢC PHÂN THEO ROLE VỚI ĐƯỜNG DẪN (PATH) CỤ THỂ
-const MENU_DATA = {
-  admin: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
-    { id: "students", label: "Quản lý sinh viên", icon: Users, path: "/dashboard/students" },
-    { id: "lecturers", label: "Quản lý giảng viên", icon: Briefcase, path: "/dashboard/lecturers" },
-    { id: "classes", label: "Quản lý lớp học", icon: School, path: "/dashboard/classes" },
-    { id: "schedule", label: "Lịch học", icon: Calendar, path: "/dashboard/schedule" },
-    { id: "reports", label: "Báo cáo", icon: BarChart2, path: "/dashboard/reports" },
-    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
-  ],
-  lecturer: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
-    { id: "new_attendance", label: "Tạo điểm danh mới", icon: ClipboardCheck, path: "/dashboard/new-attendance" },
-    { id: "my_classes", label: "Lớp của tôi", icon: Users, path: "/dashboard/my-classes" },
-    { id: "teaching_schedule", label: "Lịch dạy", icon: Calendar, path: "/dashboard/teaching-schedule" },
-    { id: "reports", label: "Báo cáo", icon: BarChart2, path: "/dashboard/reports" },
-    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
-  ],
-  student: [
-    { id: "dashboard", label: "Bảng điều khiển", icon: LayoutDashboard, path: "/dashboard" },
-    { id: "scan_qr", label: "Quét QR điểm danh", icon: QrCode, path: "/dashboard/scan-qr" },
-    { id: "schedule", label: "Lịch học", icon: Calendar, path: "/dashboard/schedule" },
-    { id: "attendance", label: "Chuyên cần", icon: ClipboardList, path: "/dashboard/attendance" },
-    { id: "notifications", label: "Thông báo", icon: Bell, path: "/dashboard/notifications" },
-    { id: "profile", label: "Hồ sơ", icon: UserCircle, path: "/dashboard/profile" },
-  ]
-}
-
-type Role = "admin" | "lecturer" | "student"
+import { GraduationCap, Plus, QrCode } from "lucide-react"
+import { MENU_DATA } from "@/constants"
+import { Role } from "@/types"
 
 export default function DashboardLayout() {
   const [role, setRole] = useState<Role>("admin")
@@ -97,15 +52,15 @@ export default function DashboardLayout() {
 
         {/* PRIMARY ACTION BUTTON (Tùy biến theo Role) */}
         {role === "lecturer" && (
-          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-md py-3 px-4 font-semibold transition-colors mb-6 shadow-sm">
-            <Plus size={20} />
+          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
+            <Plus size={20} strokeWidth={3} />
             <span>Tạo điểm danh mới</span>
           </button>
         )}
         
         {role === "student" && (
-          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-md py-3 px-4 font-semibold transition-colors mb-6 shadow-sm">
-            <QrCode size={20} />
+          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
+            <QrCode size={20} strokeWidth={3} />
             <span>Quét QR điểm danh</span>
           </button>
         )}
@@ -164,7 +119,7 @@ export default function DashboardLayout() {
         {/* PAGE CONTENT - RENDERED BY REACT ROUTER OUTLET */}
         <ScrollArea className="flex-1 bg-slate-50">
           <div className="p-8 max-w-7xl mx-auto h-full">
-            <Outlet />
+            <Outlet context={{ role }} />
           </div>
         </ScrollArea>
       </main>
