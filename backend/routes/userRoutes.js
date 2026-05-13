@@ -3,9 +3,8 @@ const router = express.Router();
 
 const userController = require('../controllers/userController');
 const { requirePermission } = require('../middleware/roleMiddleware');
-const authMiddleware = require('../middleware/authMiddleware'); // 👈 JWT thật
+const authMiddleware = require('../middleware/authMiddleware'); 
 
-// 🔐 THAY mockAuth BẰNG JWT
 router.use(authMiddleware);
 
 router.get('/', requirePermission('user.view'), userController.getUsers);
