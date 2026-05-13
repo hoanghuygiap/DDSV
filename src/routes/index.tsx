@@ -5,6 +5,8 @@ import ForgotPasswordPage from "@/pages/ForgotPassword"
 import DashboardLayout from "@/layout/DashboardLayout"
 import DashboardHome from "@/pages/DashboardHome"
 import StudentsPage from "@/pages/Students"
+import SchedulePage from "@/pages/Schedule"
+import ReportsPage from "@/pages/Reports"
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +36,14 @@ export const router = createBrowserRouter([
       {
         path: "students",
         element: <StudentsPage />,
+      },
+      {
+        path: "schedule",
+        element: <SchedulePage />,
+      },
+      {
+        path: "reports",
+        element: <ReportsPage />,
       },
       {
         path: "*",

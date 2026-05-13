@@ -29,7 +29,7 @@ export default function DashboardLayout() {
       {/* SIDEBAR */}
       <aside className="w-[280px] bg-[#f8f9fa] border-r border-slate-200 flex flex-col px-4 py-6 shadow-sm z-10 shrink-0">
         {/* LOGO AREA */}
-        <div className="flex items-center gap-3 px-2 mb-8">
+        <div className="flex items-center gap-3 px-2 mb-8 shrink-0">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1e325c] text-white shrink-0">
             <GraduationCap size={24} strokeWidth={2} />
           </div>
@@ -40,7 +40,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* ROLE TABS (For toggling UI in development) */}
-        <div className="mb-6">
+        <div className="mb-6 shrink-0">
           <Tabs value={role} onValueChange={(val) => setRole(val as Role)} className="w-full">
             <TabsList className="grid grid-cols-3 h-auto p-1 bg-slate-200/50">
               <TabsTrigger value="admin" className="text-xs py-2 data-[state=active]:bg-[#1e325c] data-[state=active]:text-white">Admin</TabsTrigger>
@@ -52,21 +52,21 @@ export default function DashboardLayout() {
 
         {/* PRIMARY ACTION BUTTON (Tùy biến theo Role) */}
         {role === "lecturer" && (
-          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
+          <button className="shrink-0 flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
             <Plus size={20} strokeWidth={3} />
             <span>Tạo điểm danh mới</span>
           </button>
         )}
         
         {role === "student" && (
-          <button className="flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
+          <button className="shrink-0 flex items-center justify-center gap-2 w-full bg-[#007082] hover:bg-[#005c6b] text-white rounded-sm py-3 px-4 font-bold transition-colors mb-6 shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1">
             <QrCode size={20} strokeWidth={3} />
             <span>Quét QR điểm danh</span>
           </button>
         )}
 
         {/* NAVIGATION MENU */}
-        <ScrollArea className="flex-1 -mx-2 px-2">
+        <div className="flex-1 overflow-y-auto min-h-0 -mx-2 px-2">
           <nav className="flex flex-col gap-1 pb-6">
             {currentMenu.map((item) => {
               const Icon = item.icon
@@ -91,11 +91,11 @@ export default function DashboardLayout() {
               )
             })}
           </nav>
-        </ScrollArea>
+        </div>
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* HEADER */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
           <div className="w-1/4">
@@ -134,11 +134,11 @@ export default function DashboardLayout() {
         </header>
 
         {/* PAGE CONTENT - RENDERED BY REACT ROUTER OUTLET */}
-        <ScrollArea className="flex-1 bg-slate-50">
-          <div className="p-6 w-full h-full">
+        <div className="flex-1 overflow-auto min-h-0 bg-slate-50">
+          <div className="p-6 w-full">
             <Outlet context={{ role }} />
           </div>
-        </ScrollArea>
+        </div>
       </main>
     </div>
   )
