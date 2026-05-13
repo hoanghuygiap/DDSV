@@ -9,6 +9,7 @@ import SchedulePage from "@/pages/Schedule"
 import ReportsPage from "@/pages/Reports"
 import ProfilePage from "@/pages/Profile"
 import LecturersPage from "@/pages/Lecturers"
+import ClassesPage from "@/pages/Classes"
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
       {
         path: "lecturers",
         element: <LecturersPage />,
+      },
+      {
+        path: "classes",
+        element: <ClassesPage />,
       },
       {
         path: "schedule",
