@@ -98,18 +98,35 @@ export default function DashboardLayout() {
       <main className="flex-1 flex flex-col min-w-0">
         {/* HEADER */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">
+          <div className="w-1/4">
+            <h2 className="text-xl font-bold text-slate-800">
               {pageTitle}
             </h2>
-            <p className="text-sm text-slate-500">
-              Khu vực làm việc dành cho {role === 'admin' ? 'Quản trị viên' : role === 'lecturer' ? 'Giảng viên' : 'Sinh viên'}
-            </p>
           </div>
-          <div className="flex items-center gap-4">
-             <Avatar className="h-10 w-10 border border-slate-200">
+          
+          <div className="flex-1 flex justify-center max-w-2xl px-4">
+            <div className="relative w-full max-w-xl">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-full leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#007082] focus:border-[#007082] sm:text-sm transition-colors"
+                placeholder="Tìm kiếm sinh viên, lớp học..."
+              />
+            </div>
+          </div>
+
+          <div className="w-1/4 flex items-center justify-end gap-5">
+             <button className="text-slate-500 hover:text-slate-700 transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+             </button>
+             <button className="text-slate-500 hover:text-slate-700 transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+             </button>
+             <Avatar className="h-9 w-9 border border-slate-200">
                <AvatarImage src="https://github.com/shadcn.png" />
-               <AvatarFallback className="bg-[#1e325c] text-white">
+               <AvatarFallback className="bg-[#1e325c] text-white text-xs">
                   {role === 'admin' ? 'AD' : role === 'lecturer' ? 'GV' : 'SV'}
                </AvatarFallback>
              </Avatar>
@@ -118,7 +135,7 @@ export default function DashboardLayout() {
 
         {/* PAGE CONTENT - RENDERED BY REACT ROUTER OUTLET */}
         <ScrollArea className="flex-1 bg-slate-50">
-          <div className="p-8 max-w-7xl mx-auto h-full">
+          <div className="p-6 w-full h-full">
             <Outlet context={{ role }} />
           </div>
         </ScrollArea>

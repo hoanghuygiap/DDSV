@@ -1,127 +1,202 @@
-import { StatCard } from "@/components/dashboard/StatCard"
-import { ActivityList } from "@/components/dashboard/ActivityList"
-import { adminWarningStudents, adminRecentActivities } from "@/mocks/dashboard"
-import { 
-  Users, 
-  School, 
-  BookOpen, 
-  AlertTriangle
-} from "lucide-react"
+import { Users, Book, CheckCircle, AlertTriangle, ChevronDown, AlertCircle, Clock, TrendingUp } from "lucide-react"
 
 export function AdminDashboard() {
   return (
-    <div className="flex flex-col gap-8">
-      {/* HEADER SECTION - NO SAFE SPLIT, ASYMMETRIC */}
-      <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-end">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-5xl font-black text-[#1e325c] tracking-tight mb-2">
-            Tổng quan hệ thống
-          </h1>
-          <p className="text-lg text-slate-500 font-medium">
-            Thống kê dữ liệu toàn trường học kỳ 2024.1
-          </p>
-        </div>
-        
-        <button className="flex items-center gap-2 bg-[#007082] hover:bg-[#005c6b] text-white px-6 py-4 rounded-sm font-bold text-lg shadow-md border-b-4 border-[#005c6b] active:border-b-0 active:translate-y-1 transition-all">
-          <School size={24} strokeWidth={2.5} />
-          <span>Tạo lớp hành chính mới</span>
-        </button>
-      </div>
-
+    <div className="flex flex-col gap-6 w-full pb-8">
+      
       {/* STATS GRID - 4 COLUMNS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Tổng Sinh viên" 
-          value="12,450" 
-          icon={Users} 
-          trend="up"
-          trendValue="120 học kỳ này"
-        />
-        <StatCard 
-          title="Tổng Giảng viên" 
-          value="450" 
-          icon={School} 
-          trend="neutral"
-          trendValue="Không đổi"
-        />
-        <StatCard 
-          title="Lớp học phần" 
-          value="1,240" 
-          icon={BookOpen} 
-        />
-        <StatCard 
-          title="Nguy cơ cấm thi" 
-          value="156" 
-          icon={AlertTriangle} 
-          trend="down"
-          trendValue="-12% so với tuần trước"
-          iconClassName="text-red-600 bg-red-100"
-        />
-      </div>
-
-      {/* TWO COLUMNS, ASYMMETRIC 70/30 SPLIT (ANTI-SAFE-SPLIT) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* PLACEHOLDER FOR CHART */}
-          <div className="bg-[#1e325c] border-2 border-[#1e325c] rounded-sm p-6 text-white shadow-md flex flex-col justify-between min-h-[320px] relative overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="font-black text-2xl mb-1 uppercase tracking-wider text-slate-200">Biểu đồ chuyên cần</h3>
-              <p className="text-slate-400 font-medium">Tỷ lệ đi học toàn trường theo tuần</p>
-            </div>
-            
-            {/* Mockup Chart Visual */}
-            <div className="relative z-10 flex items-end gap-3 h-40 mt-8 w-full border-b-2 border-white/20 pb-2">
-              {[40, 65, 55, 80, 70, 90, 85].map((h, i) => (
-                <div key={i} className="flex-1 bg-white/20 hover:bg-[#007082] transition-colors rounded-t-sm" style={{ height: `${h}%` }}></div>
-              ))}
-            </div>
-            
-            {/* Background decorative element */}
-            <div className="absolute -right-20 -bottom-20 opacity-10">
-              <BarChart2Icon size={300} />
+        
+        {/* Card 1: Tổng sinh viên */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-sm font-semibold text-slate-800">Tổng sinh viên</p>
+            <div className="p-2 rounded-md bg-[#1e325c] text-white">
+              <Users size={20} strokeWidth={2.5} />
             </div>
           </div>
-
-          <ActivityList 
-            title="Hoạt động hệ thống gần đây" 
-            items={adminRecentActivities} 
-          />
+          <div>
+            <h3 className="text-3xl font-bold text-slate-800 mb-2">12,450</h3>
+            <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              <TrendingUp size={14} className="text-emerald-500" />
+              <span className="text-emerald-500">+2.4%</span>
+              <span>so với kỳ trước</span>
+            </div>
+          </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <ActivityList 
-            title="Cảnh báo cấm thi" 
-            items={adminWarningStudents} 
-            className="h-full border-red-200"
-            action={
-              <button className="text-xs font-bold text-red-600 uppercase hover:underline">
-                Xem tất cả
-              </button>
-            }
-          />
+        {/* Card 2: Lớp học hằng ngày */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-sm font-semibold text-slate-800">Lớp học hằng ngày</p>
+            <div className="p-2 rounded-md bg-[#38bdf8] text-white">
+              <Book size={20} strokeWidth={2.5} />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-slate-800 mb-2">342</h3>
+            <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              <Clock size={14} />
+              <span>Đang diễn ra: 45</span>
+            </div>
+          </div>
         </div>
+
+        {/* Card 3: Tỷ lệ chuyên cần */}
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-sm font-semibold text-slate-800">Tỷ lệ chuyên cần</p>
+            <div className="p-2 rounded-md bg-emerald-50 text-emerald-500 border border-emerald-100">
+              <CheckCircle size={20} strokeWidth={2.5} />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-[#007082] mb-3">92.8%</h3>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-[#38bdf8] h-full rounded-full" style={{ width: '92.8%' }}></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Cảnh báo vắng */}
+        <div className="bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-lg p-5 shadow-sm flex flex-col justify-between relative">
+          <div className="flex justify-between items-start mb-2">
+            <p className="text-sm font-semibold text-slate-800">Cảnh báo vắng</p>
+            <div className="p-2 rounded-md bg-red-50 text-red-500 border border-red-100">
+              <AlertTriangle size={20} strokeWidth={2.5} />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-red-600 mb-2">84</h3>
+            <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+              <span>Sinh viên rủi ro cao (&gt;20%)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* MIDDLE SECTION - 2 COLUMNS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column: Xu hướng điểm danh */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+            <div>
+              <h3 className="font-bold text-slate-800 text-lg">Xu hướng điểm danh</h3>
+              <p className="text-sm text-slate-500">Theo từng khoa trong tháng</p>
+            </div>
+            <button className="flex items-center gap-2 border border-slate-200 rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+              Tháng này
+              <ChevronDown size={16} className="text-slate-400" />
+            </button>
+          </div>
+          
+          <div className="p-6 flex-1 flex flex-col justify-end">
+            {/* Chart Simulation */}
+            <div className="relative h-64 w-full flex items-end justify-around pb-6 border-b border-slate-100">
+              {/* Horizontal grid lines */}
+              <div className="absolute inset-0 flex flex-col justify-between pb-6 pointer-events-none">
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="w-full h-px bg-slate-100"></div>
+                <div className="w-full h-px bg-slate-100"></div>
+              </div>
+
+              {/* Bars */}
+              <div className="w-12 md:w-16 h-[85%] bg-slate-100 rounded-t-md relative group">
+                <div className="absolute bottom-0 w-full bg-[#1e325c] rounded-t-md opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: '85%' }}></div>
+              </div>
+              <div className="w-12 md:w-16 h-[75%] bg-slate-100 rounded-t-md relative group">
+                <div className="absolute bottom-0 w-full bg-[#1e325c] rounded-t-md opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: '75%' }}></div>
+              </div>
+              <div className="w-12 md:w-16 h-[60%] bg-slate-100 rounded-t-md relative group">
+                <div className="absolute bottom-0 w-full bg-[#1e325c] rounded-t-md opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: '60%' }}></div>
+              </div>
+              <div className="w-12 md:w-16 h-[90%] bg-slate-100 rounded-t-md relative group">
+                <div className="absolute bottom-0 w-full bg-[#1e325c] rounded-t-md opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: '90%' }}></div>
+              </div>
+              <div className="w-12 md:w-16 h-[70%] bg-slate-100 rounded-t-md relative group">
+                <div className="absolute bottom-0 w-full bg-[#1e325c] rounded-t-md opacity-80 group-hover:opacity-100 transition-opacity" style={{ height: '70%' }}></div>
+              </div>
+            </div>
+            
+            {/* X Axis Labels */}
+            <div className="flex justify-around pt-4 text-xs font-medium text-slate-500">
+              <span className="w-12 md:w-16 text-center">CNTT</span>
+              <span className="w-12 md:w-16 text-center">Kinh tế</span>
+              <span className="w-12 md:w-16 text-center">Cơ khí</span>
+              <span className="w-12 md:w-16 text-center">Ngoại ngữ</span>
+              <span className="w-12 md:w-16 text-center">Điện tử</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Cảnh báo rủi ro */}
+        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
+          <div className="p-4 border-b border-red-100 bg-red-50/50 flex items-center gap-2 rounded-t-lg">
+            <AlertCircle size={20} className="text-red-500" />
+            <h3 className="font-bold text-red-600 text-base">Cảnh báo rủi ro</h3>
+          </div>
+          
+          <div className="flex-1 flex flex-col">
+            {/* List Item 1 */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 font-bold flex items-center justify-center text-sm">
+                  NA
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Nguyễn Văn A</h4>
+                  <p className="text-xs text-slate-500 font-medium">20210001 • CNTT</p>
+                </div>
+              </div>
+              <span className="bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded-full text-xs font-bold">
+                Vắng 25%
+              </span>
+            </div>
+
+            {/* List Item 2 */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 font-bold flex items-center justify-center text-sm">
+                  TB
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Trần Thị B</h4>
+                  <p className="text-xs text-slate-500 font-medium">20210045 • Kinh tế</p>
+                </div>
+              </div>
+              <span className="bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded-full text-xs font-bold">
+                Vắng 22%
+              </span>
+            </div>
+
+            {/* List Item 3 */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 font-bold flex items-center justify-center text-sm">
+                  LC
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Lê Văn C</h4>
+                  <p className="text-xs text-slate-500 font-medium">20210102 • Điện tử</p>
+                </div>
+              </div>
+              <span className="bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded-full text-xs font-bold">
+                Vắng 21%
+              </span>
+            </div>
+          </div>
+          
+          <div className="p-4 mt-auto text-center border-t border-slate-100">
+            <button className="text-[#007082] text-sm font-bold hover:underline">
+              Xem tất cả 84 sinh viên
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
-  )
-}
-
-function BarChart2Icon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="18" x2="18" y1="20" y2="10" />
-      <line x1="12" x2="12" y1="20" y2="4" />
-      <line x1="6" x2="6" y1="20" y2="14" />
-    </svg>
   )
 }
