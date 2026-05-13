@@ -7,6 +7,7 @@ import DashboardHome from "@/pages/DashboardHome"
 import StudentsPage from "@/pages/Students"
 import SchedulePage from "@/pages/Schedule"
 import ReportsPage from "@/pages/Reports"
+import ProfilePage from "@/pages/Profile"
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
       {
         path: "reports",
         element: <ReportsPage />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
       },
       {
         path: "*",
