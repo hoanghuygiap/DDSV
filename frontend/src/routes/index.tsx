@@ -12,6 +12,18 @@ import LecturersPage from "@/pages/Lecturers"
 import ClassesPage from "@/pages/Classes"
 import NotificationsPage from "@/pages/Notifications"
 
+// Lecturer Pages
+import MyClasses from "@/pages/lecturer/MyClasses"
+import ClassDetail from "@/pages/lecturer/ClassDetail"
+import LiveAttendanceQR from "@/pages/lecturer/LiveAttendanceQR"
+import AttendanceHistory from "@/pages/lecturer/AttendanceHistory"
+import ClassReport from "@/pages/lecturer/ClassReport"
+
+// Student Pages
+import StudentReport from "@/pages/student/StudentReport"
+import StudentSchedule from "@/pages/student/StudentSchedule"
+import ScanQR from "@/pages/student/ScanQR"
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -64,6 +76,40 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         element: <ProfilePage />,
+      },
+      // Lecturer Routes
+      {
+        path: "my-classes",
+        element: <MyClasses />,
+      },
+      {
+        path: "my-classes/:id",
+        element: <ClassDetail />,
+      },
+      {
+        path: "new-attendance",
+        element: <LiveAttendanceQR />,
+      },
+      {
+        path: "attendance-history",
+        element: <AttendanceHistory />,
+      },
+      {
+        path: "class-reports",
+        element: <ClassReport />,
+      },
+      // Student Routes
+      {
+        path: "student-reports",
+        element: <StudentReport />,
+      },
+      {
+        path: "student-schedule",
+        element: <StudentSchedule />,
+      },
+      {
+        path: "scan-qr",
+        element: <ScanQR />,
       },
       {
         path: "*",
