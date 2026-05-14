@@ -1,17 +1,17 @@
 import { PlusCircle, ChevronDown, ListFilter, Book, Users } from "lucide-react"
-import { mockClasses } from "../mocks/classes.mock"
+import { mockClasses } from "../../mocks/classes.mock"
 
 export default function ClassesPage() {
   return (
     <div className="flex flex-col w-full pb-10">
-      
+
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e325c]">Quản lý Lớp học</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý danh sách, giảng viên và sĩ số các lớp học trong học kỳ.</p>
         </div>
-        
+
         <button className="flex items-center gap-2 bg-[#1e325c] hover:bg-[#152342] text-white rounded-md px-5 py-2.5 text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
           <PlusCircle size={18} />
           <span>Add New Class</span>
@@ -29,7 +29,7 @@ export default function ClassesPage() {
               <ChevronDown size={16} className="text-slate-400" />
             </div>
           </div>
-          
+
           {/* Department Filter */}
           <div className="flex flex-col gap-1.5 w-full sm:w-auto">
             <label className="text-xs font-bold text-slate-700">Department</label>
@@ -96,7 +96,7 @@ export default function ClassesPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
           <span className="text-sm text-slate-500">Showing 1-4 of 24 classes</span>
@@ -122,7 +122,7 @@ export default function ClassesPage() {
 
       {/* BOTTOM WIDGETS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Total Classes Card */}
         <div className="bg-[#1e325c] rounded-xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden min-h-[160px]">
           <div className="flex justify-between items-start">
@@ -150,7 +150,7 @@ export default function ClassesPage() {
           {/* Simulated Image Background */}
           <div className="absolute inset-0 bg-cover bg-center opacity-60 group-hover:opacity-50 transition-opacity" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1577416412292-747c6607f055?q=80&w=2070&auto=format&fit=crop')" }}></div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-          
+
           <div className="absolute bottom-4 left-4 right-4 z-10">
             <h3 className="text-white font-bold text-lg leading-tight">Phòng học tiêu chuẩn</h3>
             <p className="text-slate-300 text-xs mt-1">Đã cấu hình hệ thống quét QR</p>

@@ -1,5 +1,5 @@
 import { ChevronDown, Filter, Download, MoreVertical, Radio } from "lucide-react"
-import { mockWarningClasses, mockSubjectAttendance } from "../mocks/reports.mock"
+import { mockWarningClasses, mockSubjectAttendance } from "../../mocks/reports.mock"
 
 export default function ReportsPage() {
   const getStatusBadge = (status: string) => {
@@ -32,14 +32,14 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col w-full pb-10">
-      
+
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Phân tích dữ liệu học thuật</h1>
           <p className="text-sm text-slate-500 mt-1">Dữ liệu tổng hợp từ 12 khoa và 450 lớp học toàn trường.</p>
         </div>
-        
+
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-slate-500">Học kỳ</label>
@@ -48,7 +48,7 @@ export default function ReportsPage() {
               <ChevronDown size={16} className="text-slate-400" />
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-slate-500">Khoa</label>
             <div className="flex items-center gap-2 border border-slate-200 bg-white rounded-md px-3 py-2 text-sm font-medium text-slate-600 shadow-sm w-40 justify-between cursor-pointer hover:bg-slate-50">
@@ -107,7 +107,7 @@ export default function ReportsPage() {
 
       {/* MIDDLE 2 COLUMNS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        
+
         {/* Left Column: Bar Chart Simulation */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col">
           <div className="flex justify-between items-start mb-8">
@@ -119,7 +119,7 @@ export default function ReportsPage() {
               <MoreVertical size={20} />
             </button>
           </div>
-          
+
           <div className="flex-1 flex flex-col justify-end min-h-[240px]">
             {/* Chart Area */}
             <div className="relative h-48 w-full flex items-end justify-around pb-6 border-b border-slate-100">
@@ -140,7 +140,7 @@ export default function ReportsPage() {
               <div className="w-8 md:w-12 lg:w-14 h-[80%] bg-[#e2e8f0] hover:bg-[#cbd5e1] rounded-t-sm transition-colors relative z-10"></div>
               <div className="w-8 md:w-12 lg:w-14 h-[65%] bg-[#e2e8f0] hover:bg-[#cbd5e1] rounded-t-sm transition-colors relative z-10"></div>
             </div>
-            
+
             {/* X-Axis Labels */}
             <div className="flex justify-around pt-4 text-[10px] sm:text-xs font-semibold text-slate-500 uppercase">
               <span className="w-8 md:w-12 lg:w-14 text-center">CNTT</span>
@@ -160,7 +160,7 @@ export default function ReportsPage() {
             <h3 className="font-bold text-slate-800 text-lg">Cảnh báo tỷ lệ vắng</h3>
             <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">Top 5</span>
           </div>
-          
+
           <div className="flex flex-col gap-4 flex-1">
             {mockWarningClasses.map((item) => (
               <div key={item.id} className="flex justify-between items-center group">
@@ -192,7 +192,7 @@ export default function ReportsPage() {
             <span>Xuất báo cáo (Excel)</span>
           </button>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="text-xs uppercase text-slate-500 bg-slate-50/50 border-b border-slate-100">
@@ -221,7 +221,7 @@ export default function ReportsPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination Footer */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between">
           <span className="text-sm font-medium text-slate-500">Hiển thị 1-10 của 128 môn học</span>

@@ -1,19 +1,19 @@
 import { Plus, Pencil, Trash2, Clock, User } from "lucide-react"
-import { mockNotifications } from "../mocks/notifications.mock"
+import { mockNotifications } from "../../mocks/notifications.mock"
 
 export default function NotificationsPage() {
   const activeNotification = mockNotifications.find(n => n.id === "2"); // Hardcode selected notification for demo
 
   return (
     <div className="flex flex-col w-full pb-10">
-      
+
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-[#1e325c]">Thông báo hệ thống</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý và theo dõi các thông báo đã gửi cho sinh viên và giảng viên.</p>
         </div>
-        
+
         <button className="flex items-center gap-2 bg-[#38bdf8] hover:bg-[#0ea5e9] text-slate-900 rounded-md px-5 py-2.5 text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
           <Plus size={18} />
           <span>Tạo thông báo mới</span>
@@ -22,7 +22,7 @@ export default function NotificationsPage() {
 
       {/* TWO COLUMNS LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column: Notification List (7 cols) */}
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
           <div className="overflow-x-auto">
@@ -39,8 +39,8 @@ export default function NotificationsPage() {
                 {mockNotifications.map((notif) => {
                   const isActive = notif.id === "2";
                   return (
-                    <tr 
-                      key={notif.id} 
+                    <tr
+                      key={notif.id}
                       className={`transition-colors cursor-pointer ${isActive ? 'bg-slate-50 border-l-4 border-l-[#1e325c]' : 'hover:bg-slate-50/50 border-l-4 border-l-transparent'}`}
                     >
                       <td className="px-6 py-5">
@@ -56,9 +56,9 @@ export default function NotificationsPage() {
                       </td>
                       <td className="px-6 py-5 font-medium text-slate-600 w-32">
                         {notif.date.includes("\n") ? (
-                           <div className="flex flex-col">
-                             {notif.date.split('\n').map((line, i) => <span key={i}>{line}</span>)}
-                           </div>
+                          <div className="flex flex-col">
+                            {notif.date.split('\n').map((line, i) => <span key={i}>{line}</span>)}
+                          </div>
                         ) : (
                           notif.date
                         )}
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
               </button>
             </div>
           </div>
-          
+
           {activeNotification && (
             <div className="flex flex-col">
               {/* Image Banner */}
