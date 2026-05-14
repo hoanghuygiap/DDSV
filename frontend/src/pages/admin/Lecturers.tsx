@@ -1,5 +1,5 @@
 import { Search, UserPlus, Pencil, Trash2, Star } from "lucide-react"
-import { mockLecturers } from "../mocks/lecturers.mock"
+import { mockLecturers } from "../../mocks/lecturers.mock"
 
 export default function LecturersPage() {
   const getStatusBadge = (status: string) => {
@@ -32,14 +32,14 @@ export default function LecturersPage() {
 
   return (
     <div className="flex flex-col w-full pb-10">
-      
+
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1e325c]">Quản lý Giảng viên</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý và cập nhật thông tin giảng viên trong khoa.</p>
         </div>
-        
+
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative w-full md:w-72">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -107,7 +107,7 @@ export default function LecturersPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/50">
           <span className="text-sm text-slate-500 font-medium">Hiển thị 5 trên 48 giảng viên</span>
@@ -137,16 +137,16 @@ export default function LecturersPage() {
 
       {/* BOTTOM WIDGETS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Widget 1 */}
         <div className="md:col-span-2 bg-[#1e325c] rounded-xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
-          
+
           <div className="relative z-10">
             <h3 className="text-white font-bold text-lg">Tóm tắt nhân sự Faculty</h3>
             <p className="text-[#8ba3cc] text-sm mt-1">Cập nhật lần cuối: Hôm nay, 10:30 AM</p>
           </div>
-          
+
           <div className="flex items-end justify-between mt-8 relative z-10">
             <div className="flex gap-10">
               <div>
@@ -158,7 +158,7 @@ export default function LecturersPage() {
                 <h2 className="text-white text-4xl font-bold">132</h2>
               </div>
             </div>
-            
+
             <button className="bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-md px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors backdrop-blur-sm">
               Xem chi tiết
             </button>
@@ -168,11 +168,11 @@ export default function LecturersPage() {
         {/* Widget 2 */}
         <div className="bg-[#38bdf8] rounded-xl p-6 shadow-md flex flex-col items-center justify-center text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent pointer-events-none"></div>
-          
+
           <div className="w-12 h-12 bg-[#1e325c] rounded-full flex items-center justify-center text-[#38bdf8] mb-4 relative z-10 shadow-sm">
             <Star size={24} className="fill-current" />
           </div>
-          
+
           <h3 className="text-[#1e325c] font-bold text-lg mb-2 relative z-10">Thành tích Khoa</h3>
           <p className="text-[#1e325c]/80 text-sm font-medium relative z-10">
             Đã hoàn thành 95% chỉ tiêu điểm danh trong học kỳ này.

@@ -1,5 +1,5 @@
 import { Users, AlertTriangle, ChevronDown, Search, Filter, MoreVertical, ChevronRight } from "lucide-react"
-import { mockClassStudents, mockClassHistory } from "../mocks/classManagement.mock"
+import { mockClassStudents, mockClassHistory } from "../../mocks/classManagement.mock"
 
 export default function StudentsPage() {
   const getStatusBadge = (status: string) => {
@@ -24,7 +24,7 @@ export default function StudentsPage() {
           <h1 className="text-2xl font-bold text-slate-800">Quản lý Lớp học</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý điểm danh, xem lịch sử và gửi thông báo.</p>
         </div>
-        
+
         <button className="flex items-center gap-2 border border-slate-200 bg-white rounded-md px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
           <span>CS101 - Cấu trúc dữ liệu (Thứ 2, 8)</span>
           <ChevronDown size={16} className="text-slate-400 ml-2" />
@@ -75,13 +75,13 @@ export default function StudentsPage() {
 
       {/* MAIN CONTENT - 2 COLUMNS (70/30 SPLIT) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Column: Student List */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
           {/* Header */}
           <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <h3 className="font-bold text-slate-800 text-lg">Danh sách Sinh viên</h3>
-            
+
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:w-64">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -99,7 +99,7 @@ export default function StudentsPage() {
               </button>
             </div>
           </div>
-          
+
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
@@ -139,11 +139,11 @@ export default function StudentsPage() {
 
         {/* Right Column: Notification & History */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          
+
           {/* Gửi Thông Báo Widget */}
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col">
             <h3 className="font-bold text-slate-800 text-lg mb-5">Gửi Thông Báo</h3>
-            
+
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Đến:</label>
@@ -158,18 +158,18 @@ export default function StudentsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1">Nội dung:</label>
-                <textarea 
-                  className="w-full border border-slate-200 rounded-md p-3 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#007082] focus:border-[#007082] resize-none" 
+                <textarea
+                  className="w-full border border-slate-200 rounded-md p-3 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#007082] focus:border-[#007082] resize-none"
                   rows={4}
                   placeholder="Nhập thông báo..."
                 ></textarea>
               </div>
-              
+
               <button className="w-full bg-[#007082] hover:bg-[#005c6b] text-white font-bold py-2.5 rounded-md text-sm transition-colors flex items-center justify-center gap-2 mt-2 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
                 Gửi Alert
               </button>
             </div>
@@ -183,7 +183,7 @@ export default function StudentsPage() {
                 Xem lịch
               </button>
             </div>
-            
+
             <div className="flex flex-col gap-3">
               {mockClassHistory.map((history) => (
                 <div key={history.id} className="flex items-center gap-4 p-3 border border-slate-100 rounded-lg hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer group">

@@ -1,8 +1,8 @@
-import { 
-  Clock, MapPin, Edit3, Power, Users, UserCheck, AlertTriangle, 
+import {
+  Clock, MapPin, Edit3, Power, Users, UserCheck, AlertTriangle,
   ShieldCheck, Search, CheckCircle2, MapPinOff, QrCode
 } from "lucide-react"
-import { mockLiveStudents } from "../mocks/liveAttendance.mock"
+import { mockLiveStudents } from "../../mocks/liveAttendance.mock"
 
 export default function SchedulePage() {
   return (
@@ -19,15 +19,15 @@ export default function SchedulePage() {
               <span>08:00 - 10:30, Hôm nay</span>
             </div>
           </div>
-          
+
           <h1 className="text-2xl font-bold text-slate-800">Lập trình Web Cơ bản (IT3230)</h1>
-          
+
           <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
             <MapPin size={16} />
             <span>Phòng D3-501</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <button className="flex items-center gap-2 border border-slate-300 bg-white rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
             <Edit3 size={16} />
@@ -42,10 +42,10 @@ export default function SchedulePage() {
 
       {/* MAIN GRID - 12 COLUMNS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* LEFT COLUMN (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          
+
           {/* QR Code Section */}
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col items-center">
             <div className="w-full flex justify-between items-center mb-6">
@@ -55,22 +55,22 @@ export default function SchedulePage() {
                 Trực tiếp
               </div>
             </div>
-            
+
             {/* Fake QR Image */}
             <div className="w-48 h-48 border-4 border-slate-800 p-2 mb-6 rounded-sm relative flex flex-col justify-between">
-               <div className="flex justify-between h-1/3">
-                 <div className="w-12 h-12 border-4 border-slate-800"></div>
-                 <div className="w-12 h-full bg-slate-800"></div>
-                 <div className="w-12 h-12 border-4 border-slate-800"></div>
-               </div>
-               <div className="flex justify-between h-1/4">
-                 <div className="w-full h-4 border-4 border-slate-800 my-auto"></div>
-               </div>
-               <div className="flex justify-between h-1/3">
-                 <div className="w-12 h-12 border-4 border-slate-800"></div>
-                 <div className="w-8 h-full bg-slate-800 ml-4"></div>
-                 <div className="w-12 h-12 border-4 border-slate-800"></div>
-               </div>
+              <div className="flex justify-between h-1/3">
+                <div className="w-12 h-12 border-4 border-slate-800"></div>
+                <div className="w-12 h-full bg-slate-800"></div>
+                <div className="w-12 h-12 border-4 border-slate-800"></div>
+              </div>
+              <div className="flex justify-between h-1/4">
+                <div className="w-full h-4 border-4 border-slate-800 my-auto"></div>
+              </div>
+              <div className="flex justify-between h-1/3">
+                <div className="w-12 h-12 border-4 border-slate-800"></div>
+                <div className="w-8 h-full bg-slate-800 ml-4"></div>
+                <div className="w-12 h-12 border-4 border-slate-800"></div>
+              </div>
             </div>
 
             <p className="text-sm font-medium text-slate-500 mb-2">Mã xác thực hiện tại</p>
@@ -93,7 +93,7 @@ export default function SchedulePage() {
               <ShieldCheck size={20} className="text-[#007082]" />
               <h3 className="font-bold text-slate-800">Cài đặt chống gian lận</h3>
             </div>
-            
+
             <div className="flex flex-col gap-5">
               {/* Setting 1 */}
               <div className="flex items-center justify-between">
@@ -106,7 +106,7 @@ export default function SchedulePage() {
                   <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
                 </div>
               </div>
-              
+
               <div className="h-px w-full bg-slate-100"></div>
 
               {/* Setting 2 */}
@@ -127,7 +127,7 @@ export default function SchedulePage() {
 
         {/* RIGHT COLUMN (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-6">
-          
+
           {/* STATS CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
