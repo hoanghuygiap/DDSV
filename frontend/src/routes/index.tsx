@@ -4,6 +4,9 @@ import RegisterPage from "@/pages/auth/Register"
 import ForgotPasswordPage from "@/pages/auth/ForgotPassword"
 import DashboardLayout from "@/layout/DashboardLayout"
 import DashboardHome from "@/pages/DashboardHome"
+import ProtectedRoute from "@/components/ProtectedRoute"
+
+// Admin Pages
 import StudentsPage from "@/pages/admin/Students"
 import SchedulePage from "@/pages/admin/Schedule"
 import ReportsPage from "@/pages/admin/Reports"
@@ -41,83 +44,47 @@ export const router = createBrowserRouter([
     path: "/forgot-password",
     element: <ForgotPasswordPage />,
   },
+
+  // Tất cả routes trong dashboard đều yêu cầu đăng nhập
   {
-    path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <ProtectedRoute />,
     children: [
       {
-        index: true,
-        element: <DashboardHome />,
-      },
-      {
-        path: "students",
-        element: <StudentsPage />,
-      },
-      {
-        path: "lecturers",
-        element: <LecturersPage />,
-      },
-      {
-        path: "classes",
-        element: <ClassesPage />,
-      },
-      {
-        path: "schedule",
-        element: <SchedulePage />,
-      },
-      {
-        path: "reports",
-        element: <ReportsPage />,
-      },
-      {
-        path: "notifications",
-        element: <NotificationsPage />,
-      },
-      {
-        path: "profile",
-        element: <ProfilePage />,
-      },
-      // Lecturer Routes
-      {
-        path: "my-classes",
-        element: <MyClasses />,
-      },
-      {
-        path: "my-classes/:id",
-        element: <ClassDetail />,
-      },
-      {
-        path: "new-attendance",
-        element: <LiveAttendanceQR />,
-      },
-      {
-        path: "attendance-history",
-        element: <AttendanceHistory />,
-      },
-      {
-        path: "class-reports",
-        element: <ClassReport />,
-      },
-      // Student Routes
-      {
-        path: "student-reports",
-        element: <StudentReport />,
-      },
-      {
-        path: "student-schedule",
-        element: <StudentSchedule />,
-      },
-      {
-        path: "scan-qr",
-        element: <ScanQR />,
-      },
-      {
-        path: "*",
-        element: (
-          <div className="flex items-center justify-center h-full text-slate-400">
-            Trang đang được xây dựng...
-          </div>
-        ),
+        path: "/dashboard",
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: <DashboardHome /> },
+
+          // Admin
+          { path: "students", element: <StudentsPage /> },
+          { path: "lecturers", element: <LecturersPage /> },
+          { path: "classes", element: <ClassesPage /> },
+          { path: "schedule", element: <SchedulePage /> },
+          { path: "reports", element: <ReportsPage /> },
+          { path: "notifications", element: <NotificationsPage /> },
+          { path: "profile", element: <ProfilePage /> },
+
+          // Lecturer
+          { path: "my-classes", element: <MyClasses /> },
+          { path: "my-classes/:id", element: <ClassDetail /> },
+          { path: "new-attendance", element: <LiveAttendanceQR /> },
+          { path: "attendance-history", element: <AttendanceHistory /> },
+          { path: "class-reports", element: <ClassReport /> },
+
+          // Student
+          { path: "student-reports", element: <StudentReport /> },
+          { path: "student-schedule", element: <StudentSchedule /> },
+          { path: "scan-qr", element: <ScanQR /> },
+
+          {
+            path: "*",
+            element: (
+              <div className="flex items-center justify-center h-full text-slate-400">
+                Trang đang được xây dựng...
+              </div>
+            ),
+          },
+        ],
       },
     ],
   },

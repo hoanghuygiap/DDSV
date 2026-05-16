@@ -1,8 +1,41 @@
-import { Plus, Pencil, Trash2, Clock, User } from "lucide-react"
-import { mockNotifications } from "../../mocks/notifications.mock"
+import { useState } from "react"
+import { Plus, Clock, User } from "lucide-react"
+
+const notifications = [
+  {
+    id: "1",
+    title: "Thông báo lịch thi học kỳ II",
+    summary: "Lịch thi chính thức học kỳ II năm học 2023-2024",
+    target: "Toàn trường",
+    date: "15/05/2024",
+    status: "SENT",
+    sender: "Ban Đào Tạo",
+    content: "Trường Đại học Thăng Long thông báo lịch thi học kỳ II năm học 2023-2024 chính thức được công bố. Sinh viên vui lòng kiểm tra lịch thi trên hệ thống và chuẩn bị đầy đủ giấy tờ cần thiết.",
+  },
+  {
+    id: "2",
+    title: "Cảnh báo vắng học quá 20%",
+    summary: "Danh sách sinh viên có tỷ lệ vắng cao",
+    target: "Sinh viên có rủi ro",
+    date: "14/05/2024",
+    status: "SENT",
+    sender: "Phòng Quản lý SV",
+    content: "Kính gửi các sinh viên trong danh sách cảnh báo,\n\nTỷ lệ vắng mặt của bạn đã vượt quá 20% số buổi học quy định. Nếu tình trạng này tiếp tục, bạn có thể bị cấm thi theo quy định của nhà trường. Vui lòng liên hệ giảng viên phụ trách để biết thêm thông tin.",
+  },
+  {
+    id: "3",
+    title: "Thay đổi phòng học tuần 15",
+    summary: "Cập nhật phòng học cho một số lớp",
+    target: "IT-K15",
+    date: "13/05/2024",
+    status: "SENDING",
+    sender: "Phòng Quản trị",
+    content: "Thông báo thay đổi phòng học tuần 15 cho các lớp IT-K15:\n- IT3230-01: Chuyển từ D3-501 sang D3-502\n- IT2150-02: Chuyển từ B1-302 sang B1-304",
+  },
+]
 
 export default function NotificationsPage() {
-  const activeNotification = mockNotifications.find(n => n.id === "2"); // Hardcode selected notification for demo
+  const [selected, setSelected] = useState(notifications[1])
 
   return (
     <div className="flex flex-col w-full pb-10">
@@ -13,17 +46,21 @@ export default function NotificationsPage() {
           <h1 className="text-3xl font-bold text-[#1e325c]">Thông báo hệ thống</h1>
           <p className="text-sm text-slate-500 mt-1">Quản lý và theo dõi các thông báo đã gửi cho sinh viên và giảng viên.</p>
         </div>
-
-        <button className="flex items-center gap-2 bg-[#38bdf8] hover:bg-[#0ea5e9] text-slate-900 rounded-md px-5 py-2.5 text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
-          <Plus size={18} />
-          <span>Tạo thông báo mới</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-md px-3 py-2 text-xs font-medium">
+            Chức năng đang phát triển
+          </div>
+          <button className="flex items-center gap-2 bg-[#38bdf8] hover:bg-[#0ea5e9] text-slate-900 rounded-md px-5 py-2.5 text-sm font-bold shadow-sm transition-colors whitespace-nowrap">
+            <Plus size={18} />
+            <span>Tạo thông báo mới</span>
+          </button>
+        </div>
       </div>
 
       {/* TWO COLUMNS LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Left Column: Notification List (7 cols) */}
+        {/* Left Column: Notification List */}
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-600">
@@ -36,16 +73,19 @@ export default function NotificationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {mockNotifications.map((notif) => {
-                  const isActive = notif.id === "2";
+                {notifications.map((notif) => {
+                  const isActive = notif.id === selected.id
                   return (
                     <tr
                       key={notif.id}
-                      className={`transition-colors cursor-pointer ${isActive ? 'bg-slate-50 border-l-4 border-l-[#1e325c]' : 'hover:bg-slate-50/50 border-l-4 border-l-transparent'}`}
+                      onClick={() => setSelected(notif)}
+                      className={`transition-colors cursor-pointer ${isActive ? "bg-slate-50 border-l-4 border-l-[#1e325c]" : "hover:bg-slate-50/50 border-l-4 border-l-transparent"}`}
                     >
                       <td className="px-6 py-5">
                         <div className="flex flex-col">
-                          <span className={`font-bold text-[15px] mb-0.5 ${isActive ? 'text-[#1e325c]' : 'text-slate-700'}`}>{notif.title}</span>
+                          <span className={`font-bold text-[15px] mb-0.5 ${isActive ? "text-[#1e325c]" : "text-slate-700"}`}>
+                            {notif.title}
+                          </span>
                           <span className="text-xs text-slate-500">{notif.summary}</span>
                         </div>
                       </td>
@@ -54,15 +94,7 @@ export default function NotificationsPage() {
                           {notif.target}
                         </span>
                       </td>
-                      <td className="px-6 py-5 font-medium text-slate-600 w-32">
-                        {notif.date.includes("\n") ? (
-                          <div className="flex flex-col">
-                            {notif.date.split('\n').map((line, i) => <span key={i}>{line}</span>)}
-                          </div>
-                        ) : (
-                          notif.date
-                        )}
-                      </td>
+                      <td className="px-6 py-5 font-medium text-slate-600">{notif.date}</td>
                       <td className="px-6 py-5 text-center">
                         {notif.status === "SENT" ? (
                           <span className="inline-flex px-3 py-1 text-emerald-600 border border-emerald-200 rounded-full text-[11px] font-bold bg-emerald-50">
@@ -75,65 +107,34 @@ export default function NotificationsPage() {
                         )}
                       </td>
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Right Column: Notification Details (5 cols) */}
+        {/* Right Column: Notification Detail */}
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-xl shadow-sm p-6 flex flex-col h-fit">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-[#1e325c] text-lg">Chi tiết thông báo</h3>
-            <div className="flex items-center gap-3">
-              <button className="text-slate-400 hover:text-slate-700 transition-colors">
-                <Pencil size={18} />
-              </button>
-              <button className="text-slate-400 hover:text-red-600 transition-colors">
-                <Trash2 size={18} />
-              </button>
+          <h3 className="font-bold text-[#1e325c] text-lg mb-6">Chi tiết thông báo</h3>
+
+          <h2 className="text-xl font-bold text-[#1e325c] mb-4 leading-tight">{selected.title}</h2>
+
+          <div className="flex flex-col gap-2 mb-6 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+              <Clock size={16} />
+              <span>Gửi lúc: {selected.date}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+              <User size={16} />
+              <span>Người gửi: {selected.sender}</span>
             </div>
           </div>
 
-          {activeNotification && (
-            <div className="flex flex-col">
-              {/* Image Banner */}
-              {activeNotification.imageUrl && (
-                <div className="w-full h-48 rounded-lg overflow-hidden mb-6 relative">
-                  <img src={activeNotification.imageUrl} alt="Notification Cover" className="w-full h-full object-cover" />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold flex items-center gap-1.5 shadow-sm text-slate-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8]"></span>
-                    Live
-                  </div>
-                </div>
-              )}
-
-              {/* Title */}
-              <h2 className="text-2xl font-bold text-[#1e325c] mb-4 leading-tight">
-                {activeNotification.title}
-              </h2>
-
-              {/* Meta Info */}
-              <div className="flex flex-col gap-2 mb-6 pb-6 border-b border-slate-100">
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-                  <Clock size={16} />
-                  <span>Gửi lúc: {activeNotification.date.replace('\n', ' ')}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-                  <User size={16} />
-                  <span>Người gửi: {activeNotification.sender}</span>
-                </div>
-              </div>
-
-              {/* Content Body */}
-              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
-                {activeNotification.content}
-              </div>
-            </div>
-          )}
+          <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+            {selected.content}
+          </div>
         </div>
-
       </div>
     </div>
   )

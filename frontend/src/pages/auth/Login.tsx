@@ -5,34 +5,49 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { GraduationCap, User, Lock, EyeOff, Eye } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Giả lập xử lý đăng nhập thành công
-    navigate("/dashboard")
+    setError("")
+    setIsLoading(true)
+    try {
+      await login(username, password)
+      navigate("/dashboard", { replace: true })
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin."
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
       <div className="bg-white rounded-xl shadow-xl overflow-hidden flex w-full max-w-[1000px] min-h-[600px]">
-        
-        {/* LEFT SIDE - IMAGE SECTION */}
+
+        {/* LEFT SIDE */}
         <div className="hidden md:flex flex-col justify-end w-1/2 p-10 relative overflow-hidden bg-[#1e325c]">
-          {/* BACKGROUND IMAGE PLACEHOLDER */}
-          <div 
+          <div
             className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay"
-            style={{ 
-              backgroundImage: "url('https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2070&auto=format&fit=crop')",
-              backgroundPosition: "center" 
+            style={{
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2070&auto=format&fit=crop')",
             }}
           />
-          {/* GRADIENT OVERLAY */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/60 to-transparent" />
-          
           <div className="relative z-10 space-y-4">
             <h2 className="text-3xl font-bold text-white leading-tight">
               Hệ thống quản lý chuyên cần thông minh
@@ -43,10 +58,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE - FORM SECTION */}
+        {/* RIGHT SIDE - FORM */}
         <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-          
-          {/* LOGO */}
           <div className="flex items-center gap-2 mb-8">
             <div className="text-[#1e325c]">
               <GraduationCap size={28} strokeWidth={2.5} />
@@ -54,47 +67,59 @@ export default function LoginPage() {
             <span className="text-xl font-bold text-[#1e325c]">UniCheck</span>
           </div>
 
-          {/* HEADINGS */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 mb-2">Chào mừng trở lại</h1>
-            <p className="text-slate-500 text-sm">
-              Đăng nhập để tiếp tục vào hệ thống UniCheck.
-            </p>
+            <p className="text-slate-500 text-sm">Đăng nhập để tiếp tục vào hệ thống UniCheck.</p>
           </div>
 
-          {/* LOGIN FORM */}
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleLogin}>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold text-slate-700">Tên đăng nhập / Email</Label>
+              <Label htmlFor="username" className="text-xs font-bold text-slate-700">
+                Tên đăng nhập
+              </Label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <User size={18} />
                 </div>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="Nhập tên đăng nhập hoặc email" 
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Nhập tên đăng nhập"
                   className="pl-10 h-12 rounded-lg border-slate-200 bg-slate-50/50"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-bold text-slate-700">Mật khẩu</Label>
+              <Label htmlFor="password" className="text-xs font-bold text-slate-700">
+                Mật khẩu
+              </Label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <Lock size={18} />
                 </div>
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Nhập mật khẩu" 
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Nhập mật khẩu"
                   className="pl-10 pr-10 h-12 rounded-lg border-slate-200 bg-slate-50/50"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
@@ -115,19 +140,28 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full h-12 bg-[#1e325c] hover:bg-[#152342] text-white rounded-lg font-bold text-base shadow-md transition-colors">
-              Đăng nhập
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#1e325c] hover:bg-[#152342] text-white rounded-lg font-bold text-base shadow-md transition-colors disabled:opacity-60"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Đang đăng nhập...
+                </span>
+              ) : (
+                "Đăng nhập"
+              )}
             </Button>
           </form>
 
-          {/* FOOTER LINK */}
           <div className="mt-8 text-center text-sm">
             <span className="text-slate-500">Chưa có tài khoản? </span>
             <Link to="/register" className="font-bold text-[#1e325c] hover:underline transition-colors">
               Đăng ký ngay
             </Link>
           </div>
-          
         </div>
       </div>
     </div>

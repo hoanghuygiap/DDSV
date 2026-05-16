@@ -1,27 +1,39 @@
-import { Account, Role, Permission } from "../types/auth.type";
-import { mockAccounts, mockRoles, mockPermissions } from "../mocks/auth.mock";
-
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import api from "@/api/axios"
+import type { AuthUser, ChangePasswordPayload } from "@/types/auth.type"
 
 export const AuthService = {
-  getAccounts: async (): Promise<Account[]> => {
-    await delay(300);
-    return mockAccounts;
-  },
-  
-  getAccountById: async (id: number): Promise<Account | undefined> => {
-    await delay(300);
-    return mockAccounts.find(acc => acc.id === id);
+  /** Đăng nhập — trả về token + thông tin user */
+  login: async (username: string, password: string) => {
+    const res = await api.post("/auth/login", { username, password })
+    return res.data as { access_token: string; refresh_token: string; user: AuthUser }
   },
 
-  getRoles: async (): Promise<Role[]> => {
-    await delay(300);
-    return mockRoles;
+  /** Đăng xuất */
+  logout: async () => {
+    await api.post("/auth/logout")
   },
 
-  getPermissions: async (): Promise<Permission[]> => {
-    await delay(300);
-    return mockPermissions;
-  }
-};
+  /** Lấy thông tin người dùng hiện tại từ token */
+  getMe: async (): Promise<AuthUser> => {
+    const res = await api.get("/auth/me")
+    return res.data.user
+  },
+
+  /** Quên mật khẩu — gửi email reset */
+  forgotPassword: async (email: string) => {
+    const res = await api.post("/auth/forgot-password", { email })
+    return res.data
+  },
+
+  /** Đặt lại mật khẩu bằng token */
+  resetPassword: async (token: string, new_password: string) => {
+    const res = await api.post("/auth/reset-password", { token, new_password })
+    return res.data
+  },
+
+  /** Đổi mật khẩu (đã đăng nhập) */
+  changePassword: async (payload: ChangePasswordPayload) => {
+    const res = await api.post("/auth/change-password", payload)
+    return res.data
+  },
+}
