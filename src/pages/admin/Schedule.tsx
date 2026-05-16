@@ -1,224 +1,110 @@
-import {
-  Clock, MapPin, Edit3, Power, Users, UserCheck, AlertTriangle,
-  ShieldCheck, Search, CheckCircle2, MapPinOff, QrCode
-} from "lucide-react"
-import { mockLiveStudents } from "../../mocks/liveAttendance.mock"
+import { Calendar, Clock, MapPin, Users } from "lucide-react"
+
+const scheduleItems = [
+  { id: 1, subject: "Lập trình Web Cơ bản", code: "IT3230", room: "D3-501", day: "Thứ 2", time: "07:30 - 10:00", lecturer: "Nguyễn Văn A", students: 42, status: "ongoing" },
+  { id: 2, subject: "Cơ sở dữ liệu", code: "IT2150", room: "B1-302", day: "Thứ 3", time: "13:30 - 16:00", lecturer: "Trần Thị B", students: 38, status: "upcoming" },
+  { id: 3, subject: "Giải tích 1", code: "MT1001", room: "A2-201", day: "Thứ 4", time: "07:30 - 10:00", lecturer: "Lê Văn C", students: 55, status: "upcoming" },
+  { id: 4, subject: "Mạng máy tính", code: "IT3150", room: "D2-405", day: "Thứ 5", time: "10:15 - 12:45", lecturer: "Phạm Thị D", students: 30, status: "upcoming" },
+  { id: 5, subject: "Kỹ thuật lập trình", code: "IT1050", room: "B3-101", day: "Thứ 6", time: "07:30 - 10:00", lecturer: "Nguyễn Văn A", students: 48, status: "upcoming" },
+]
 
 export default function SchedulePage() {
+  const days = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6"]
+
   return (
     <div className="flex flex-col w-full pb-8">
-      {/* HEADER SECTION */}
+
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <span className="bg-blue-100 text-blue-600 px-2.5 py-0.5 rounded text-xs font-bold">
-              Đang diễn ra
-            </span>
-            <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
-              <Clock size={14} />
-              <span>08:00 - 10:30, Hôm nay</span>
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold text-slate-800">Lập trình Web Cơ bản (IT3230)</h1>
-
-          <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
-            <MapPin size={16} />
-            <span>Phòng D3-501</span>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-[#1e325c]">Thời khoá biểu</h1>
+          <p className="text-sm text-slate-500 mt-1">Lịch giảng dạy toàn trường trong tuần hiện tại.</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 border border-slate-300 bg-white rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-            <Edit3 size={16} />
-            <span>Sửa thủ công</span>
-          </button>
-          <button className="flex items-center gap-2 border border-[#c12a2a] bg-[#c12a2a] rounded-md px-4 py-2 text-sm font-bold text-white hover:bg-[#a52222] transition-colors shadow-sm">
-            <Power size={16} />
-            <span>Kết thúc phiên</span>
-          </button>
+        <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-md px-4 py-2.5 text-sm font-medium">
+          Chức năng đang phát triển
         </div>
       </div>
 
-      {/* MAIN GRID - 12 COLUMNS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* LEFT COLUMN (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-
-          {/* QR Code Section */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800">Quét mã để điểm danh</h3>
-              <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-2 py-1 rounded-full text-xs font-bold text-blue-600">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                Trực tiếp
-              </div>
+      {/* STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          { label: "Tổng buổi học / tuần", value: scheduleItems.length, icon: Calendar, color: "text-[#1e325c]" },
+          { label: "Đang diễn ra", value: scheduleItems.filter(s => s.status === "ongoing").length, icon: Clock, color: "text-emerald-600" },
+          { label: "Tổng sinh viên", value: scheduleItems.reduce((s, i) => s + i.students, 0), icon: Users, color: "text-[#007082]" },
+          { label: "Phòng học", value: new Set(scheduleItems.map(s => s.room)).size, icon: MapPin, color: "text-amber-600" },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+              <stat.icon size={18} className={stat.color} />
             </div>
-
-            {/* Fake QR Image */}
-            <div className="w-48 h-48 border-4 border-slate-800 p-2 mb-6 rounded-sm relative flex flex-col justify-between">
-              <div className="flex justify-between h-1/3">
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-                <div className="w-12 h-full bg-slate-800"></div>
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-              </div>
-              <div className="flex justify-between h-1/4">
-                <div className="w-full h-4 border-4 border-slate-800 my-auto"></div>
-              </div>
-              <div className="flex justify-between h-1/3">
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-                <div className="w-8 h-full bg-slate-800 ml-4"></div>
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-              </div>
-            </div>
-
-            <p className="text-sm font-medium text-slate-500 mb-2">Mã xác thực hiện tại</p>
-            <div className="w-full bg-slate-100/80 border border-slate-200 rounded-lg py-3 text-center mb-6">
-              <span className="text-4xl font-black text-[#1e325c] tracking-widest">842 911</span>
-            </div>
-
-            <div className="w-full flex items-center justify-between border border-slate-200 bg-slate-50 rounded-md px-4 py-3 text-sm font-medium text-slate-600">
-              <div className="flex items-center gap-2">
-                <Clock size={16} className="text-slate-400" />
-                <span>Làm mới sau:</span>
-              </div>
-              <span className="font-bold text-slate-800">00:15</span>
-            </div>
+            <h3 className={`text-3xl font-bold ${stat.color}`}>{stat.value}</h3>
           </div>
+        ))}
+      </div>
 
-          {/* Anti-cheat Settings */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex items-center gap-2 mb-5">
-              <ShieldCheck size={20} className="text-[#007082]" />
-              <h3 className="font-bold text-slate-800">Cài đặt chống gian lận</h3>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              {/* Setting 1 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Kiểm tra GPS</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Yêu cầu SV trong bán kính 50m</p>
-                </div>
-                {/* Custom Toggle ON */}
-                <div className="w-10 h-5 bg-[#007082] rounded-full relative cursor-pointer flex-shrink-0">
-                  <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
-                </div>
-              </div>
-
-              <div className="h-px w-full bg-slate-100"></div>
-
-              {/* Setting 2 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Chỉ cho phép Wi-Fi trường</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Bắt buộc dùng: HUST_Student</p>
-                </div>
-                {/* Custom Toggle OFF */}
-                <div className="w-10 h-5 bg-slate-200 rounded-full relative cursor-pointer flex-shrink-0">
-                  <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm border border-slate-200"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+      {/* SCHEDULE TABLE */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100">
+          <h3 className="font-bold text-slate-800 text-lg">Lịch học theo ngày</h3>
         </div>
-
-        {/* RIGHT COLUMN (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-
-          {/* STATS CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-[#1e325c] flex items-center justify-center text-white shrink-0">
-                <Users size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Tổng sĩ số</p>
-                <h3 className="text-2xl font-bold text-slate-800">120</h3>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                <UserCheck size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Đã điểm danh</p>
-                <h3 className="text-2xl font-bold text-slate-800">85</h3>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                <AlertTriangle size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Cảnh báo GPS</p>
-                <h3 className="text-2xl font-bold text-slate-800">3</h3>
-              </div>
-            </div>
-          </div>
-
-          {/* LIST TABLE */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h3 className="font-bold text-slate-800 text-lg">Danh sách điểm danh (Live)</h3>
-              <div className="relative w-full sm:w-64">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={16} className="text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-md text-sm bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#007082] focus:border-[#007082]"
-                  placeholder="Tìm MSSV hoặc Tên..."
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="text-xs uppercase text-slate-500 bg-slate-50/50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 font-bold tracking-wider">MSSV</th>
-                    <th className="px-6 py-4 font-bold tracking-wider">Họ và Tên</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Thời gian</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Trạng thái</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Xác thực GPS</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="text-[11px] uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
+              <tr>
+                <th className="px-6 py-4 font-bold tracking-wider">Môn học</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Ngày học</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Thời gian</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Phòng</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Giảng viên</th>
+                <th className="px-6 py-4 font-bold tracking-wider text-center">Sĩ số</th>
+                <th className="px-6 py-4 font-bold tracking-wider text-center">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {days.map((day) => {
+                const dayItems = scheduleItems.filter(s => s.day === day)
+                if (dayItems.length === 0) return null
+                return dayItems.map((item, idx) => (
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[#1e325c] text-[14px]">{item.subject}</span>
+                        <span className="text-xs text-slate-500">{item.code}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-700">
+                      {idx === 0 ? day : ""}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-600 flex items-center gap-1.5">
+                      <Clock size={14} className="text-slate-400" />
+                      {item.time}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                        <MapPin size={14} className="text-slate-400" />
+                        {item.room}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-medium text-slate-600">{item.lecturer}</td>
+                    <td className="px-6 py-4 text-center font-bold text-slate-800">{item.students}</td>
+                    <td className="px-6 py-4 text-center">
+                      {item.status === "ongoing" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          Đang học
+                        </span>
+                      ) : (
+                        <span className="inline-flex px-2.5 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">
+                          Sắp tới
+                        </span>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {mockLiveStudents.map((student, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-700">{student.mssv}</td>
-                      <td className="px-6 py-4 font-bold text-slate-800">{student.name}</td>
-                      <td className="px-6 py-4 text-center font-medium">{student.time}</td>
-                      <td className="px-6 py-4 text-center">
-                        {student.status === "PRESENT" ? (
-                          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-xs font-bold">
-                            Có mặt
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-xs font-bold">
-                            Đi muộn
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center flex justify-center">
-                        {student.gpsValid ? (
-                          <CheckCircle2 size={18} className="text-emerald-500" />
-                        ) : (
-                          <MapPinOff size={18} className="text-amber-500" />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+                ))
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
