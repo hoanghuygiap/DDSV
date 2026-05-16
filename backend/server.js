@@ -6,7 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const lecturerRoutes = require('./routes/lecturerRoutes');
-
+const studentRoutes = require('./routes/studentRoutes');
 const app = express();
 
 // Middlewares
@@ -19,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/lecturers', lecturerRoutes);
+app.use('/api/students', studentRoutes);
 
 // Bắt lỗi các route không tồn tại (404)
 app.use((req, res, next) => {
