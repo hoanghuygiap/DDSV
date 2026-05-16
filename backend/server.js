@@ -10,6 +10,9 @@ const studentRoutes = require('./routes/studentRoutes');
 const facultyRoutes = require('./routes/facultyRoutes');
 const majorRoutes = require('./routes/majorRoutes');
 const classRoutes = require('./routes/classRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
+const semesterRoutes = require('./routes/semesterRoutes');
+const courseClassRoutes = require('./routes/courseClassRoutes');
 const app = express();
 
 // Middlewares
@@ -26,8 +29,9 @@ app.use('/api/students', studentRoutes);
 app.use('/api/faculties', facultyRoutes);
 app.use('/api/majors', majorRoutes);
 app.use('/api/classes', classRoutes);
-
-
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/semesters', semesterRoutes);
+app.use('/api/course-classes', courseClassRoutes);
 
 // Bắt lỗi các route không tồn tại (404)
 app.use((req, res, next) => {
