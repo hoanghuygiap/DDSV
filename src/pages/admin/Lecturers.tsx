@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, Pencil, Trash2, X, Loader2, ChevronLeft, ChevronRight, LockKeyhole, Unlock } from "lucide-react"
 import { LecturerService } from "@/services/lecturer.service"
 import type { Lecturer, LecturerPayload } from "@/types/user.type"
@@ -14,6 +15,7 @@ const EMPTY_FORM: LecturerPayload = {
 }
 
 export default function LecturersPage() {
+  const navigate = useNavigate()
   const [lecturers, setLecturers] = useState<Lecturer[]>([])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -257,7 +259,10 @@ export default function LecturersPage() {
                             {initials}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-[#007082] text-[15px]">{lecturer.ho_ten}</span>
+                            <button onClick={() => navigate(`/dashboard/lecturers/${lecturer.id}`)}
+                              className="font-bold text-[#007082] text-[15px] text-left hover:underline">
+                              {lecturer.ho_ten}
+                            </button>
                             <span className="text-xs text-slate-500 mt-0.5">{lecturer.username}</span>
                           </div>
                         </div>

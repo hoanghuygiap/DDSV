@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, Pencil, Trash2, X, Loader2, LockKeyhole, Unlock, ChevronLeft, ChevronRight } from "lucide-react"
 import { UserService } from "@/services/user.service"
 import type { UserAccount, UserPayload } from "@/types/user.type"
@@ -7,6 +8,7 @@ const PAGE_SIZE = 20
 const EMPTY_FORM: UserPayload = { username: "", password: "", ho_ten: "", email: "", roleId: 3 }
 
 export default function StudentsPage() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState<UserAccount[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -249,7 +251,10 @@ export default function StudentsPage() {
                             {initials}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-[#007082] text-[15px]">{user.ho_ten || "—"}</span>
+                            <button onClick={() => navigate(`/dashboard/students/${user.id}`)}
+                              className="font-bold text-[#007082] text-[15px] text-left hover:underline">
+                              {user.ho_ten || "—"}
+                            </button>
                             <span className="text-xs text-slate-500 mt-0.5">{user.username}</span>
                           </div>
                         </div>
