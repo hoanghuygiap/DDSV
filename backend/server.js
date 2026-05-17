@@ -13,6 +13,7 @@ const classRoutes = require('./routes/classRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
 const semesterRoutes = require('./routes/semesterRoutes');
 const courseClassRoutes = require('./routes/courseClassRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
 const app = express();
 
 // Middlewares
@@ -21,17 +22,19 @@ app.use(express.json()); // Phân tích body có định dạng application/json
 app.use(express.urlencoded({ extended: true }));
 
 // Khai báo Base Route cho cấu trúc Authentication
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/roles', roleRoutes);
-app.use('/api/lecturers', lecturerRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/faculties', facultyRoutes);
-app.use('/api/majors', majorRoutes);
-app.use('/api/classes', classRoutes);
-app.use('/api/subjects', subjectRoutes);
-app.use('/api/semesters', semesterRoutes);
-app.use('/api/course-classes', courseClassRoutes);
+app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/roles', roleRoutes);
+app.use('/lecturers', lecturerRoutes);
+app.use('/students', studentRoutes);
+app.use('/faculties', facultyRoutes);
+app.use('/majors', majorRoutes);
+app.use('/classes', classRoutes);
+app.use('/subjects', subjectRoutes);
+app.use('/semesters', semesterRoutes);
+app.use('/course-classes', courseClassRoutes);
+app.use('/sessions', sessionRoutes);
+
 
 // Bắt lỗi các route không tồn tại (404)
 app.use((req, res, next) => {
