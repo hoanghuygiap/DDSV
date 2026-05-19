@@ -2,20 +2,21 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const roleRoutes = require('./routes/roleRoutes');
-const lecturerRoutes = require('./routes/lecturerRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const facultyRoutes = require('./routes/facultyRoutes');
-const majorRoutes = require('./routes/majorRoutes');
-const classRoutes = require('./routes/classRoutes');
-const subjectRoutes = require('./routes/subjectRoutes');
-const semesterRoutes = require('./routes/semesterRoutes');
-const courseClassRoutes = require('./routes/courseClassRoutes');
-const sessionRoutes = require('./routes/sessionRoutes');
-const qrRoutes = require('./routes/qrRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
+const authRoutes = require('./routes/authRoutes');// Auth - đăng nhập, đăng ký, quên mật khẩu, đổi mật khẩu
+const userRoutes = require('./routes/userRoutes');// User - quản lý tài khoản người dùng
+const roleRoutes = require('./routes/roleRoutes');// Role - quản lý vai trò, phân quyền
+const lecturerRoutes = require('./routes/lecturerRoutes');// Lecturer - quản lý thông tin giảng viên
+const studentRoutes = require('./routes/studentRoutes');// Student - quản lý thông tin sinh viên
+const facultyRoutes = require('./routes/facultyRoutes'); // Faculty - quản lý khoa
+const majorRoutes = require('./routes/majorRoutes');// Major - quản lý ngành học
+const classRoutes = require('./routes/classRoutes');// Class - quản lý lớp hành chính
+const subjectRoutes = require('./routes/subjectRoutes');// Subject - quản lý học phần / môn học
+const semesterRoutes = require('./routes/semesterRoutes');// Semester - quản lý học kỳ, năm học
+const courseClassRoutes = require('./routes/courseClassRoutes');// CourseClass - quản lý lớp môn học, danh sách sinh viên trong lớp môn học
+const sessionRoutes = require('./routes/sessionRoutes');// Session - quản lý buổi học, mở/đóng điểm danh, đổi phòng học
+const qrRoutes = require('./routes/qrRoutes');//tao qr code
+const attendanceRoutes = require('./routes/attendanceRoutes');//diem danh
+const validateRoutes = require('./routes/validateRoutes');//chech gps
 const app = express();
 
 // Middlewares
@@ -38,6 +39,7 @@ app.use('/course-classes', courseClassRoutes);
 app.use('/sessions', sessionRoutes);
 app.use('/qr', qrRoutes);
 app.use('/attendance', attendanceRoutes);
+app.use('/validate', validateRoutes);
 
 
 // Bắt lỗi các route không tồn tại (404)
