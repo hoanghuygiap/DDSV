@@ -13,6 +13,7 @@ function generateUniqueStudentCodes(count, min, max) {
     return Array.from(codes);
 }
 
+
 async function generateBulkUsers() {
     let connection;
     try {

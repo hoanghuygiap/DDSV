@@ -15,6 +15,7 @@ const semesterRoutes = require('./routes/semesterRoutes');
 const courseClassRoutes = require('./routes/courseClassRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const qrRoutes = require('./routes/qrRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 const app = express();
 
 // Middlewares
@@ -36,6 +37,7 @@ app.use('/semesters', semesterRoutes);
 app.use('/course-classes', courseClassRoutes);
 app.use('/sessions', sessionRoutes);
 app.use('/qr', qrRoutes);
+app.use('/attendance', attendanceRoutes);
 
 
 // Bắt lỗi các route không tồn tại (404)
