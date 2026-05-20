@@ -17,6 +17,9 @@ const sessionRoutes = require('./routes/sessionRoutes');// Session - quản lý 
 const qrRoutes = require('./routes/qrRoutes');//tao qr code
 const attendanceRoutes = require('./routes/attendanceRoutes');//diem danh
 const validateRoutes = require('./routes/validateRoutes');//chech gps
+const roomRoutes = require('./routes/roomRoutes');//quản lý phòng học
+const notificationRoutes = require('./routes/notificationRoutes');//quản lý thông báo
+const warningRoutes = require('./routes/warningRoutes');//quản lý cảnh báo
 const app = express();
 
 // Middlewares
@@ -40,6 +43,10 @@ app.use('/sessions', sessionRoutes);
 app.use('/qr', qrRoutes);
 app.use('/attendance', attendanceRoutes);
 app.use('/validate', validateRoutes);
+app.use('/rooms', roomRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/warnings', warningRoutes);
+
 
 
 // Bắt lỗi các route không tồn tại (404)
