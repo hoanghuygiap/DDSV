@@ -20,6 +20,8 @@ const validateRoutes = require('./routes/validateRoutes');//chech gps
 const roomRoutes = require('./routes/roomRoutes');//quản lý phòng học
 const notificationRoutes = require('./routes/notificationRoutes');//quản lý thông báo
 const warningRoutes = require('./routes/warningRoutes');//quản lý cảnh báo
+const reportRoutes = require('./routes/reportRoutes');//quản lý báo cáo
+const deviceRoutes = require('./routes/deviceRoutes');//quản lý thiết bị
 const app = express();
 
 // Middlewares
@@ -46,6 +48,8 @@ app.use('/validate', validateRoutes);
 app.use('/rooms', roomRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/warnings', warningRoutes);
+app.use('/reports', reportRoutes);
+app.use('/devices', deviceRoutes);
 
 
 
