@@ -13,6 +13,8 @@ import LecturersPage from "@/pages/admin/Lecturers"
 import LecturerDetailPage from "@/pages/admin/LecturerDetail"
 import ClassesPage from "@/pages/admin/Classes"
 import NotificationsPage from "@/pages/admin/Notifications"
+import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
+import ClassDetailPage from "@/pages/lecturer/ClassDetail"
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +64,14 @@ export const router = createBrowserRouter([
       {
         path: "schedule",
         element: <SchedulePage />,
+      },
+      {
+        path: "lecturer-schedule",
+        element: <LecturerSchedulePage />,
+      },
+      {
+        path: "my-classes/:id",
+        element: <ClassDetailPage />,
       },
       {
         path: "reports",
