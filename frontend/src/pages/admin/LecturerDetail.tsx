@@ -1,11 +1,20 @@
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
   ArrowLeft, Loader2, LockKeyhole, Unlock, Trash2,
-  Mail, Phone, Calendar, BookOpen, Users,
+  Mail, Phone, Calendar, BookOpen, Users, X, GraduationCap,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react"
 import { LecturerService } from "@/services/lecturer.service"
+import api from "@/api/axios"
 import type { Lecturer } from "@/types/user.type"
+
+interface ClassStudent {
+  id: number
+  ma_sinh_vien: string
+  ho_ten: string
+  ten_lop: string | null
+}
 
 interface ScheduleItem {
   buoi_hoc_id: number
@@ -15,6 +24,7 @@ interface ScheduleItem {
   trang_thai: string
   ma_hoc_phan: string
   ten_hoc_phan: string
+  lop_mon_hoc_id: number
   ma_lop: string
   ten_phong: string | null
   ten_ky: string
@@ -32,7 +42,68 @@ interface CourseClass {
 }
 
 type Tab = "info" | "schedule" | "classes"
+type ScheduleView = "tuan" | "thu-tiet"
+type GridCell =
+  | { type: "session"; session: ScheduleItem; startTiet: number; endTiet: number; rowspan: number }
+  | { type: "skip" }
+  | null
 
+// ─── Tiết schedule ────────────────────────────────────────────────────────────
+const TIET_INFO = [
+  { tiet: 1,  start: 7*60+0,   end: 7*60+50,  label: "07:00-07:50" },
+  { tiet: 2,  start: 7*60+50,  end: 8*60+40,  label: "07:50-08:40" },
+  { tiet: 3,  start: 8*60+40,  end: 9*60+30,  label: "08:40-09:30" },
+  { tiet: 4,  start: 9*60+45,  end: 10*60+35, label: "09:45-10:35" },
+  { tiet: 5,  start: 10*60+35, end: 11*60+25, label: "10:35-11:25" },
+  { tiet: 6,  start: 11*60+25, end: 12*60+15, label: "11:25-12:15" },
+  { tiet: 7,  start: 13*60+30, end: 14*60+20, label: "13:30-14:20" },
+  { tiet: 8,  start: 14*60+20, end: 15*60+10, label: "14:20-15:10" },
+  { tiet: 9,  start: 15*60+30, end: 16*60+20, label: "15:30-16:20" },
+  { tiet: 10, start: 16*60+20, end: 17*60+10, label: "16:20-17:10" },
+]
+const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"]
+
+function toMins(t: string) { const [h, m] = t.split(":").map(Number); return h * 60 + m }
+function timeToStartTiet(t: string) {
+  const mins = toMins(t)
+  return TIET_INFO.reduce((best, ti) =>
+    Math.abs(ti.start - mins) < Math.abs(TIET_INFO[best - 1].start - mins) ? ti.tiet : best, 1)
+}
+function timeToEndTiet(t: string) {
+  const mins = toMins(t)
+  return TIET_INFO.reduce((best, ti) =>
+    Math.abs(ti.end - mins) < Math.abs(TIET_INFO[best - 1].end - mins) ? ti.tiet : best, 1)
+}
+function getMonday(d: Date) {
+  const day = new Date(d); const dow = day.getDay()
+  day.setDate(day.getDate() - (dow === 0 ? 6 : dow - 1)); day.setHours(0,0,0,0); return day
+}
+function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r }
+function isSameDate(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+function fmtDate(d: Date) {
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`
+}
+function fmtTime(t: string) { const [h, m] = t.split(":"); return `${h}g${m}` }
+
+function buildWeekGrid(sessions: ScheduleItem[], weekDays: Date[]): Record<number, Record<number, GridCell>> {
+  const grid: Record<number, Record<number, GridCell>> = {}
+  for (let d = 0; d < 7; d++) { grid[d] = {}; for (let t = 1; t <= 10; t++) grid[d][t] = null }
+  for (const session of sessions) {
+    const sessionDate = new Date(session.ngay_hoc)
+    const dayIdx = weekDays.findIndex((wd) => isSameDate(wd, sessionDate))
+    if (dayIdx === -1) continue
+    const startTiet = timeToStartTiet(session.gio_bat_dau)
+    const endTiet = timeToEndTiet(session.gio_ket_thuc)
+    const rowspan = Math.max(1, endTiet - startTiet + 1)
+    grid[dayIdx][startTiet] = { type: "session", session, startTiet, endTiet, rowspan }
+    for (let t = startTiet + 1; t <= endTiet; t++) grid[dayIdx][t] = { type: "skip" }
+  }
+  return grid
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function LecturerDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -47,26 +118,32 @@ export default function LecturerDetailPage() {
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<Tab>("info")
 
+  // schedule sub-state
+  const [scheduleView, setScheduleView] = useState<ScheduleView>("tuan")
+  const [selectedKy, setSelectedKy] = useState("")
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()))
+
   const [showLockModal, setShowLockModal] = useState(false)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [lockMinutes, setLockMinutes] = useState("15")
   const [isLocking, setIsLocking] = useState(false)
-
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
+  // student list modal
+  const [selectedClass, setSelectedClass] = useState<CourseClass | null>(null)
+  const [classStudents, setClassStudents] = useState<ClassStudent[]>([])
+  const [studentsLoading, setStudentsLoading] = useState(false)
+  const [studentsTotal, setStudentsTotal] = useState(0)
+
   const fetchLecturer = async () => {
     if (!id) return
-    setIsLoading(true)
-    setError("")
+    setIsLoading(true); setError("")
     try {
       const data = await LecturerService.getById(Number(id))
       setLecturer(data)
-    } catch {
-      setError("Không thể tải thông tin giảng viên.")
-    } finally {
-      setIsLoading(false)
-    }
+    } catch { setError("Không thể tải thông tin giảng viên.") }
+    finally { setIsLoading(false) }
   }
 
   useEffect(() => { fetchLecturer() }, [id])
@@ -79,11 +156,8 @@ export default function LecturerDetailPage() {
         const data = await LecturerService.getSchedule(Number(id))
         setSchedule(data ?? [])
         setScheduleLoaded(true)
-      } catch {
-        setSchedule([])
-      } finally {
-        setIsLoadingTab(false)
-      }
+      } catch { setSchedule([]) }
+      finally { setIsLoadingTab(false) }
     }
     if (tab === "classes" && !classesLoaded) {
       setIsLoadingTab(true)
@@ -91,75 +165,114 @@ export default function LecturerDetailPage() {
         const data = await LecturerService.getCourseClasses(Number(id))
         setCourseClasses(data ?? [])
         setClassesLoaded(true)
-      } catch {
-        setCourseClasses([])
-      } finally {
-        setIsLoadingTab(false)
-      }
+      } catch { setCourseClasses([]) }
+      finally { setIsLoadingTab(false) }
     }
   }
 
   const handleLock = async () => {
-    if (!lecturer) return
-    setIsLocking(true)
-    try {
-      await LecturerService.lock(lecturer.tai_khoan_id, Number(lockMinutes) || 15)
-      setShowLockModal(false)
-      fetchLecturer()
-    } catch {
-      alert("Khóa tài khoản thất bại.")
-    } finally {
-      setIsLocking(false)
-    }
+    if (!lecturer) return; setIsLocking(true)
+    try { await LecturerService.lock(lecturer.tai_khoan_id, Number(lockMinutes) || 15); setShowLockModal(false); fetchLecturer() }
+    catch { alert("Khóa tài khoản thất bại.") }
+    finally { setIsLocking(false) }
   }
 
   const handleUnlock = async () => {
-    if (!lecturer) return
-    setIsLocking(true)
+    if (!lecturer) return; setIsLocking(true)
+    try { await LecturerService.unlock(lecturer.tai_khoan_id); setShowUnlockModal(false); fetchLecturer() }
+    catch { alert("Mở khóa thất bại.") }
+    finally { setIsLocking(false) }
+  }
+
+  const openStudents = async (cls: CourseClass) => {
+    setSelectedClass(cls)
+    setClassStudents([])
+    setStudentsTotal(0)
+    setStudentsLoading(true)
     try {
-      await LecturerService.unlock(lecturer.tai_khoan_id)
-      setShowUnlockModal(false)
-      fetchLecturer()
-    } catch {
-      alert("Mở khóa thất bại.")
-    } finally {
-      setIsLocking(false)
-    }
+      const res = await api.get(`/course-classes/${cls.id}/students`, { params: { limit: 200 } })
+      setClassStudents(res.data.data ?? [])
+      setStudentsTotal(res.data.pagination?.total ?? 0)
+    } catch { /* keep empty */ }
+    finally { setStudentsLoading(false) }
   }
 
   const handleDelete = async () => {
-    if (!lecturer) return
-    setIsDeleting(true)
-    try {
-      await LecturerService.remove(lecturer.id)
-      navigate("/dashboard/lecturers")
-    } catch {
-      alert("Xóa thất bại.")
-    } finally {
-      setIsDeleting(false)
+    if (!lecturer) return; setIsDeleting(true)
+    try { await LecturerService.remove(lecturer.id); navigate("/dashboard/lecturers") }
+    catch { alert("Xóa thất bại.") }
+    finally { setIsDeleting(false) }
+  }
+
+  // ── Derived from schedule ──────────────────────────────────────────────────
+  const semesters = useMemo(() => [...new Set(schedule.map((s) => s.ten_ky))].sort(), [schedule])
+  useEffect(() => {
+    if (semesters.length > 0 && !selectedKy) setSelectedKy(semesters[semesters.length - 1])
+  }, [semesters])
+
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)), [currentWeekStart])
+  const semesterSessions = useMemo(
+    () => (selectedKy ? schedule.filter((s) => s.ten_ky === selectedKy) : schedule),
+    [schedule, selectedKy]
+  )
+  const weekSessions = useMemo(
+    () => semesterSessions.filter((s) => { const d = new Date(s.ngay_hoc); return d >= weekDays[0] && d <= addDays(weekDays[6], 1) }),
+    [semesterSessions, weekDays]
+  )
+  const weekGrid = useMemo(() => buildWeekGrid(weekSessions, weekDays), [weekSessions, weekDays])
+
+  const gotoFirstWeek = () => {
+    if (!semesterSessions.length) return
+    const earliest = semesterSessions.reduce((a, b) => new Date(a.ngay_hoc) < new Date(b.ngay_hoc) ? a : b)
+    setCurrentWeekStart(getMonday(new Date(earliest.ngay_hoc)))
+  }
+  const gotoLastWeek = () => {
+    if (!semesterSessions.length) return
+    const latest = semesterSessions.reduce((a, b) => new Date(a.ngay_hoc) > new Date(b.ngay_hoc) ? a : b)
+    setCurrentWeekStart(getMonday(new Date(latest.ngay_hoc)))
+  }
+
+  // ── TKB Thứ-Tiết ──────────────────────────────────────────────────────────
+  const thuTietData = useMemo(() => {
+    const byClass = new Map<number, { sessions: ScheduleItem[] }>()
+    for (const s of semesterSessions) {
+      if (!byClass.has(s.lop_mon_hoc_id)) byClass.set(s.lop_mon_hoc_id, { sessions: [] })
+      byClass.get(s.lop_mon_hoc_id)!.sessions.push(s)
     }
-  }
+    return Array.from(byClass.entries()).map(([lmhId, { sessions }]) => {
+      type SlotKey = string
+      const slots = new Map<SlotKey, { dayNum: number; batDau: string; ketThuc: string; phong: string | null; minDate: Date; maxDate: Date }>()
+      for (const s of sessions) {
+        const d = new Date(s.ngay_hoc); const dow = d.getDay()
+        const key: SlotKey = `${dow}|${s.gio_bat_dau}|${s.ten_phong ?? ""}`
+        if (!slots.has(key)) slots.set(key, { dayNum: dow, batDau: s.gio_bat_dau, ketThuc: s.gio_ket_thuc, phong: s.ten_phong, minDate: d, maxDate: d })
+        else {
+          const slot = slots.get(key)!
+          if (d < slot.minDate) slot.minDate = d
+          if (d > slot.maxDate) slot.maxDate = d
+        }
+      }
+      const first = sessions[0]
+      return {
+        lmhId, ma_lop: first.ma_lop, ma_hoc_phan: first.ma_hoc_phan, ten_hoc_phan: first.ten_hoc_phan,
+        slots: Array.from(slots.values()).sort((a, b) => {
+          const da = a.dayNum === 0 ? 7 : a.dayNum; const db = b.dayNum === 0 ? 7 : b.dayNum
+          return da - db || a.batDau.localeCompare(b.batDau)
+        }),
+      }
+    })
+  }, [semesterSessions])
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-32">
-        <Loader2 size={32} className="animate-spin text-slate-400" />
-      </div>
-    )
-  }
-
-  if (error || !lecturer) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 gap-3">
-        <p className="text-sm text-red-500">{error || "Không tìm thấy giảng viên."}</p>
-        <button onClick={() => navigate("/dashboard/lecturers")}
-          className="text-sm text-[#007082] hover:underline">← Quay lại danh sách</button>
-      </div>
-    )
-  }
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (isLoading) return <div className="flex items-center justify-center py-32"><Loader2 size={32} className="animate-spin text-slate-400" /></div>
+  if (error || !lecturer) return (
+    <div className="flex flex-col items-center justify-center py-32 gap-3">
+      <p className="text-sm text-red-500">{error || "Không tìm thấy giảng viên."}</p>
+      <button onClick={() => navigate("/dashboard/lecturers")} className="text-sm text-[#007082] hover:underline">← Quay lại danh sách</button>
+    </div>
+  )
 
   const initials = lecturer.ho_ten.split(" ").slice(-2).map((w: string) => w[0]).join("").toUpperCase()
-
   const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "info", label: "Thông tin", icon: <Users size={15} /> },
     { key: "schedule", label: "Lịch giảng dạy", icon: <Calendar size={15} /> },
@@ -201,7 +314,6 @@ export default function LecturerDetailPage() {
               </div>
             </div>
           </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             {lecturer.kich_hoat ? (
               <button onClick={() => { setLockMinutes("15"); setShowLockModal(true) }}
@@ -252,44 +364,170 @@ export default function LecturerDetailPage() {
           {/* TAB LỊCH GIẢNG DẠY */}
           {activeTab === "schedule" && (
             isLoadingTab ? (
-              <div className="flex justify-center py-12">
-                <Loader2 size={24} className="animate-spin text-slate-400" />
-              </div>
-            ) : schedule.length === 0 ? (
-              <p className="text-center text-sm text-slate-400 py-12">Chưa có lịch giảng dạy.</p>
+              <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-slate-400" /></div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left text-slate-600">
-                  <thead className="text-[11px] uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
-                    <tr>
-                      <th className="px-4 py-3 font-bold">Ngày học</th>
-                      <th className="px-4 py-3 font-bold">Giờ</th>
-                      <th className="px-4 py-3 font-bold">Học phần</th>
-                      <th className="px-4 py-3 font-bold">Lớp</th>
-                      <th className="px-4 py-3 font-bold">Phòng</th>
-                      <th className="px-4 py-3 font-bold">Kỳ học</th>
-                      <th className="px-4 py-3 font-bold">Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {schedule.map((item) => (
-                      <tr key={item.buoi_hoc_id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-medium">{new Date(item.ngay_hoc).toLocaleDateString("vi-VN")}</td>
-                        <td className="px-4 py-3 text-slate-500">
-                          {item.gio_bat_dau?.slice(0, 5)} – {item.gio_ket_thuc?.slice(0, 5)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-[#007082]">{item.ten_hoc_phan}</p>
-                          <p className="text-xs text-slate-400">{item.ma_hoc_phan}</p>
-                        </td>
-                        <td className="px-4 py-3 font-medium">{item.ma_lop}</td>
-                        <td className="px-4 py-3">{item.ten_phong || "—"}</td>
-                        <td className="px-4 py-3 text-slate-500">{item.ten_ky}</td>
-                        <td className="px-4 py-3"><ScheduleStatusBadge status={item.trang_thai} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div>
+                {/* Sub-tabs */}
+                <div className="flex border-b border-slate-200 mb-4">
+                  {([["tuan", "TKB TUẦN"], ["thu-tiet", "TKB THỨ - TIẾT"]] as [ScheduleView, string][]).map(([key, label]) => (
+                    <button key={key} onClick={() => setScheduleView(key)}
+                      className={`px-5 py-2.5 text-sm font-bold border-b-2 transition-colors ${
+                        scheduleView === key ? "border-[#1e325c] text-[#1e325c]" : "border-transparent text-slate-500 hover:text-slate-700"
+                      }`}>{label}</button>
+                  ))}
+                </div>
+
+                {/* Controls */}
+                <div className="flex flex-wrap items-end gap-3 mb-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs text-slate-500 font-medium">Học kỳ</label>
+                    <select value={selectedKy} onChange={(e) => setSelectedKy(e.target.value)}
+                      className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1e325c] min-w-[180px]">
+                      <option value="">Tất cả học kỳ</option>
+                      {semesters.map((ky) => <option key={ky} value={ky}>{ky}</option>)}
+                    </select>
+                  </div>
+
+                  {scheduleView === "tuan" && (
+                    <>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-slate-500 font-medium">Tuần</label>
+                        <div className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 min-w-[200px] bg-white">
+                          {fmtDate(weekDays[0])} – {fmtDate(weekDays[6])}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 ml-1">
+                        <button onClick={gotoFirstWeek} title="Tuần đầu tiên"
+                          className="w-8 h-8 flex items-center justify-center border border-[#1e325c] bg-[#1e325c] text-white rounded hover:bg-[#16274a] transition-colors">
+                          <ChevronsLeft size={14} />
+                        </button>
+                        <button onClick={() => setCurrentWeekStart((w) => addDays(w, -7))} title="Tuần trước"
+                          className="w-8 h-8 flex items-center justify-center border border-slate-300 text-slate-600 rounded hover:bg-slate-50 transition-colors">
+                          <ChevronLeft size={14} />
+                        </button>
+                        <button onClick={() => setCurrentWeekStart(getMonday(new Date()))}
+                          className="h-8 px-3 border border-[#1e325c] bg-[#1e325c] text-white text-xs font-bold rounded hover:bg-[#16274a] transition-colors">
+                          Hiện tại
+                        </button>
+                        <button onClick={() => setCurrentWeekStart((w) => addDays(w, 7))} title="Tuần sau"
+                          className="w-8 h-8 flex items-center justify-center border border-slate-300 text-slate-600 rounded hover:bg-slate-50 transition-colors">
+                          <ChevronRight size={14} />
+                        </button>
+                        <button onClick={gotoLastWeek} title="Tuần cuối cùng"
+                          className="w-8 h-8 flex items-center justify-center border border-[#1e325c] bg-[#1e325c] text-white rounded hover:bg-[#16274a] transition-colors">
+                          <ChevronsRight size={14} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* ── TKB TUẦN ── */}
+                {scheduleView === "tuan" && (
+                  <>
+                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                      <table className="w-full border-collapse text-xs" style={{ minWidth: 760 }}>
+                        <thead>
+                          <tr className="bg-[#1e325c] text-white">
+                            <th className="border border-[#16274a] px-2 py-3 w-12 text-center font-bold">Tiết</th>
+                            {weekDays.map((day, i) => (
+                              <th key={i} className="border border-[#16274a] px-2 py-3 text-center font-bold">
+                                <div>{DAY_NAMES[i]}</div>
+                                <div className="font-normal text-[11px] text-blue-200 mt-0.5">{fmtDate(day)}</div>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {TIET_INFO.map(({ tiet, label }) => (
+                            <tr key={tiet}>
+                              <td className="border border-slate-200 text-center py-2 bg-slate-50">
+                                <div className="font-bold text-slate-700 text-sm">{tiet}</div>
+                                <div className="text-[10px] text-slate-400">{label}</div>
+                              </td>
+                              {Array.from({ length: 7 }, (_, dayIdx) => {
+                                const cell = weekGrid[dayIdx]?.[tiet] ?? null
+                                if (cell?.type === "skip") return <Fragment key={dayIdx} />
+                                if (!cell) return <td key={dayIdx} className="border border-slate-100 bg-white" style={{ minHeight: 44 }} />
+                                const { session, startTiet, endTiet, rowspan } = cell
+                                const soTiet = endTiet - startTiet + 1
+                                return (
+                                  <td key={dayIdx} rowSpan={rowspan}
+                                    className="border border-slate-200 align-top p-1.5 bg-blue-50/40">
+                                    <div className="text-[11px] leading-relaxed">
+                                      <div className="font-extrabold text-slate-800 mb-0.5">{session.ten_phong || "—"}</div>
+                                      <div className="font-bold text-[#1e325c] leading-tight mb-1">
+                                        {session.ten_hoc_phan}
+                                        {session.ma_hoc_phan && session.ma_hoc_phan !== "—" && (
+                                          <span className="font-normal text-slate-500"> ({session.ma_hoc_phan})</span>
+                                        )}
+                                      </div>
+                                      <div className="text-slate-500">LHP: <span className="font-medium">{session.ma_lop}</span></div>
+                                      <div className="text-slate-500">Tiết: {startTiet}–{endTiet} ({soTiet} tiết)</div>
+                                      <div className="text-slate-500">Bắt đầu: {fmtTime(session.gio_bat_dau)}</div>
+                                    </div>
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {weekSessions.length === 0 && (
+                      <p className="text-center text-sm text-slate-400 py-10">Không có buổi học nào trong tuần này.</p>
+                    )}
+                  </>
+                )}
+
+                {/* ── TKB THỨ - TIẾT ── */}
+                {scheduleView === "thu-tiet" && (
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
+                      <thead>
+                        <tr className="bg-[#1e325c] text-white">
+                          {["STT", "Mã lớp / Tên học phần", "Mã HP", "Thứ", "Tiết (giờ)", "Phòng", "Tuần"].map((h) => (
+                            <th key={h} className="border border-[#16274a] px-3 py-3 text-left font-bold whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {thuTietData.length === 0 ? (
+                          <tr><td colSpan={7} className="text-center py-10 text-slate-400 border border-slate-200">Không có dữ liệu.</td></tr>
+                        ) : thuTietData.map((item, sttIdx) => {
+                          const rowCount = item.slots.length || 1
+                          return item.slots.map((slot, slotIdx) => {
+                            const startTiet = timeToStartTiet(slot.batDau)
+                            const endTiet = timeToEndTiet(slot.ketThuc)
+                            const dow = slot.dayNum === 0 ? 7 : slot.dayNum
+                            const dayName = dow === 7 ? "Chủ Nhật" : `Thứ ${["","","Hai","Ba","Tư","Năm","Sáu","Bảy","Nhật"][dow]}`
+                            const tietRange = startTiet === endTiet ? `${startTiet}` : `${startTiet}–${endTiet}`
+                            const gioHien = `${tietRange} (${fmtTime(slot.batDau)}–${fmtTime(slot.ketThuc)})`
+                            const tuanRange = `${fmtDate(slot.minDate)} – ${fmtDate(slot.maxDate)}`
+                            return (
+                              <tr key={`${item.lmhId}-${slotIdx}`} className="hover:bg-slate-50 border-b border-slate-100">
+                                {slotIdx === 0 && (
+                                  <>
+                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-bold text-slate-700 align-middle">{sttIdx + 1}</td>
+                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 align-top">
+                                      <div className="font-bold text-[#1e325c]">{item.ma_lop}</div>
+                                      <div className="text-slate-500 mt-0.5">{item.ten_hoc_phan}</div>
+                                    </td>
+                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-slate-500 align-middle">{item.ma_hoc_phan}</td>
+                                  </>
+                                )}
+                                <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700 whitespace-nowrap">{dayName}</td>
+                                <td className="border border-slate-200 px-3 py-2 text-slate-600 whitespace-nowrap">{gioHien}</td>
+                                <td className="border border-slate-200 px-3 py-2 font-bold text-slate-700">{slot.phong || "—"}</td>
+                                <td className="border border-slate-200 px-3 py-2 text-slate-500 whitespace-nowrap">{tuanRange}</td>
+                              </tr>
+                            )
+                          })
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )
           )}
@@ -297,9 +535,7 @@ export default function LecturerDetailPage() {
           {/* TAB LỚP PHỤ TRÁCH */}
           {activeTab === "classes" && (
             isLoadingTab ? (
-              <div className="flex justify-center py-12">
-                <Loader2 size={24} className="animate-spin text-slate-400" />
-              </div>
+              <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-slate-400" /></div>
             ) : courseClasses.length === 0 ? (
               <p className="text-center text-sm text-slate-400 py-12">Chưa có lớp phụ trách.</p>
             ) : (
@@ -312,12 +548,15 @@ export default function LecturerDetailPage() {
                       <th className="px-4 py-3 font-bold text-center">Tín chỉ</th>
                       <th className="px-4 py-3 font-bold">Kỳ học</th>
                       <th className="px-4 py-3 font-bold">Thời gian</th>
+                      <th className="px-4 py-3 font-bold"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {courseClasses.map((cls) => (
-                      <tr key={cls.id} className="hover:bg-slate-50/50">
-                        <td className="px-4 py-3 font-bold text-[#1e325c]">{cls.ma_lop}</td>
+                      <tr key={cls.id}
+                        onClick={() => openStudents(cls)}
+                        className="hover:bg-[#007082]/5 cursor-pointer transition-colors group">
+                        <td className="px-4 py-3 font-bold text-[#1e325c] group-hover:text-[#007082]">{cls.ma_lop}</td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-[#007082]">{cls.ten_hoc_phan}</p>
                           <p className="text-xs text-slate-400">{cls.ma_hoc_phan}</p>
@@ -329,6 +568,11 @@ export default function LecturerDetailPage() {
                           {" – "}
                           {cls.ket_thuc ? new Date(cls.ket_thuc).toLocaleDateString("vi-VN") : "—"}
                         </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 text-xs text-[#007082] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Users size={13} /> Xem DS
+                          </span>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -338,6 +582,78 @@ export default function LecturerDetailPage() {
           )}
         </div>
       </div>
+
+      {/* MODAL DANH SÁCH SINH VIÊN */}
+      {selectedClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#007082]/10 flex items-center justify-center shrink-0">
+                  <GraduationCap size={20} className="text-[#007082]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-800">{selectedClass.ten_hoc_phan}</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Lớp: <span className="font-bold text-slate-700">{selectedClass.ma_lop}</span>
+                    {" · "}{selectedClass.ten_ky}
+                    {studentsTotal > 0 && <> · <span className="font-bold text-[#007082]">{studentsTotal} sinh viên</span></>}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedClass(null)}
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="overflow-y-auto flex-1">
+              {studentsLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
+                  <Loader2 size={24} className="animate-spin" />
+                  <span className="text-sm">Đang tải danh sách...</span>
+                </div>
+              ) : classStudents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
+                  <Users size={32} className="opacity-30" />
+                  <p className="text-sm">Chưa có sinh viên đăng ký lớp này.</p>
+                </div>
+              ) : (
+                <table className="w-full text-sm text-left">
+                  <thead className="text-[11px] uppercase text-slate-500 bg-slate-50 border-b border-slate-200 sticky top-0">
+                    <tr>
+                      <th className="px-6 py-3 font-bold w-10 text-center">STT</th>
+                      <th className="px-4 py-3 font-bold">Mã sinh viên</th>
+                      <th className="px-4 py-3 font-bold">Họ tên</th>
+                      <th className="px-4 py-3 font-bold">Lớp hành chính</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {classStudents.map((sv, idx) => (
+                      <tr key={sv.id} className="hover:bg-slate-50/60">
+                        <td className="px-6 py-3 text-center text-slate-400 text-xs">{idx + 1}</td>
+                        <td className="px-4 py-3 font-mono font-bold text-slate-700">{sv.ma_sinh_vien}</td>
+                        <td className="px-4 py-3 font-medium text-slate-800">{sv.ho_ten}</td>
+                        <td className="px-4 py-3 text-slate-500">{sv.ten_lop || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50 rounded-b-xl shrink-0 flex justify-end">
+              <button onClick={() => setSelectedClass(null)}
+                className="px-5 py-2 text-sm text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL KHÓA */}
       {showLockModal && (
@@ -435,19 +751,5 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
         <p className="text-sm font-bold text-slate-700">{value}</p>
       </div>
     </div>
-  )
-}
-
-function ScheduleStatusBadge({ status }: { status: string }) {
-  const MAP: Record<string, { cls: string; label: string }> = {
-    da_hoc: { cls: "bg-emerald-50 text-emerald-600 border-emerald-100", label: "Đã học" },
-    sap_hoc: { cls: "bg-blue-50 text-blue-600 border-blue-100", label: "Sắp học" },
-    huy: { cls: "bg-red-50 text-red-600 border-red-100", label: "Đã hủy" },
-  }
-  const s = MAP[status] ?? { cls: "bg-slate-50 text-slate-500 border-slate-100", label: status }
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${s.cls}`}>
-      {s.label}
-    </span>
   )
 }

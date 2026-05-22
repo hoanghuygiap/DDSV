@@ -2,24 +2,27 @@ import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
   ArrowLeft, Loader2, LockKeyhole, Unlock, Trash2,
-  Mail, Calendar, Clock, AlertTriangle, Pencil, X, BookOpen,
+  Mail, Phone, Calendar, Clock, AlertTriangle, Pencil, X, BookOpen,
 } from "lucide-react"
 import { UserService } from "@/services/user.service"
-import { StudentService, type StudentClass, type StudentProfile } from "@/services/student.service"
-import type { UserAccount, UserPayload } from "@/types/user.type"
+import { StudentService, type StudentClass, type StudentListItem } from "@/services/student.service"
+import type { UserAccount } from "@/types/user.type"
 
 export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [user, setUser] = useState<UserAccount | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // sv.id from URL
+  const svId = Number(id)
 
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null)
+  const [student, setStudent] = useState<StudentListItem | null>(null)
+  const [account, setAccount] = useState<UserAccount | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+
   const [classes, setClasses] = useState<StudentClass[]>([])
   const [isLoadingClasses, setIsLoadingClasses] = useState(false)
   const [classesError, setClassesError] = useState("")
-  const [error, setError] = useState("")
 
   const [showLockModal, setShowLockModal] = useState(false)
   const [showUnlockModal, setShowUnlockModal] = useState(false)
@@ -30,51 +33,53 @@ export default function StudentDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const [showEditModal, setShowEditModal] = useState(false)
-  const [editForm, setEditForm] = useState<Pick<UserPayload, "ho_ten" | "email">>({ ho_ten: "", email: "" })
+  const [editForm, setEditForm] = useState({ ho_ten: "", email: "" })
   const [editError, setEditError] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
-  const fetchUser = async () => {
-    if (!id) return
+  const fetchStudent = async () => {
+    if (!svId) return
     setIsLoading(true)
     setError("")
     try {
-      const data = await UserService.getById(Number(id))
-      setUser(data)
+      const sv = await StudentService.getById(svId)
+      setStudent(sv)
+      // fetch account details (failed_attempts, lock_until, last_login)
+      const acc = await UserService.getById(sv.tai_khoan_id)
+      setAccount(acc)
     } catch {
-      setError("Không thể tải thông tin tài khoản.")
+      setError("Không thể tải thông tin sinh viên.")
     } finally {
       setIsLoading(false)
     }
   }
 
   const fetchClasses = async () => {
-    if (!id) return
+    if (!svId) return
     setIsLoadingClasses(true)
     setClassesError("")
     try {
-      const res = await StudentService.getClassesByAccount(Number(id))
-      setStudentProfile(res.student)
-      setClasses(res.data)
+      const res = await StudentService.getClassesById(svId)
+      setClasses(res.data ?? [])
     } catch {
-      setClassesError("Không tìm thấy hồ sơ sinh viên hoặc dữ liệu lớp học.")
+      setClassesError("Không thể tải danh sách lớp học.")
     } finally {
       setIsLoadingClasses(false)
     }
   }
 
   useEffect(() => {
-    fetchUser()
+    fetchStudent()
     fetchClasses()
-  }, [id])
+  }, [svId])
 
   const handleLock = async () => {
-    if (!user) return
+    if (!student) return
     setIsLocking(true)
     try {
-      await UserService.lock(user.id, Number(lockMinutes) || 15)
+      await UserService.lock(student.tai_khoan_id, Number(lockMinutes) || 15)
       setShowLockModal(false)
-      fetchUser()
+      fetchStudent()
     } catch {
       alert("Khóa tài khoản thất bại.")
     } finally {
@@ -83,12 +88,12 @@ export default function StudentDetailPage() {
   }
 
   const handleUnlock = async () => {
-    if (!user) return
+    if (!student) return
     setIsLocking(true)
     try {
-      await UserService.unlock(user.id)
+      await UserService.unlock(student.tai_khoan_id)
       setShowUnlockModal(false)
-      fetchUser()
+      fetchStudent()
     } catch {
       alert("Mở khóa thất bại.")
     } finally {
@@ -97,10 +102,10 @@ export default function StudentDetailPage() {
   }
 
   const handleDelete = async () => {
-    if (!user) return
+    if (!student) return
     setIsDeleting(true)
     try {
-      await UserService.remove(user.id)
+      await StudentService.remove(student.id)
       navigate("/dashboard/students")
     } catch {
       alert("Xóa thất bại.")
@@ -110,23 +115,23 @@ export default function StudentDetailPage() {
   }
 
   const openEdit = () => {
-    if (!user) return
-    setEditForm({ ho_ten: user.ho_ten || "", email: user.email || "" })
+    if (!student) return
+    setEditForm({ ho_ten: student.ho_ten || "", email: student.email || "" })
     setEditError("")
     setShowEditModal(true)
   }
 
   const handleSaveEdit = async () => {
-    if (!user || !editForm.ho_ten || !editForm.email) {
+    if (!student || !editForm.ho_ten || !editForm.email) {
       setEditError("Vui lòng điền đầy đủ thông tin.")
       return
     }
     setIsSaving(true)
     setEditError("")
     try {
-      await UserService.update(user.id, editForm)
+      await UserService.update(student.tai_khoan_id, editForm)
       setShowEditModal(false)
-      fetchUser()
+      fetchStudent()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Cập nhật thất bại."
       setEditError(msg)
@@ -143,19 +148,21 @@ export default function StudentDetailPage() {
     )
   }
 
-  if (error || !user) {
+  if (error || !student) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-3">
-        <p className="text-sm text-red-500">{error || "Không tìm thấy tài khoản."}</p>
+        <p className="text-sm text-red-500">{error || "Không tìm thấy sinh viên."}</p>
         <button onClick={() => navigate("/dashboard/students")}
           className="text-sm text-[#007082] hover:underline">← Quay lại danh sách</button>
       </div>
     )
   }
 
-  const initials = user.ho_ten
-    ? user.ho_ten.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()
-    : user.username.slice(0, 2).toUpperCase()
+  const initials = student.ho_ten
+    ? student.ho_ten.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()
+    : student.username.slice(0, 2).toUpperCase()
+
+  const isActive = student.kich_hoat
 
   return (
     <div className="flex flex-col w-full pb-10 max-w-5xl">
@@ -174,16 +181,21 @@ export default function StudentDetailPage() {
               {initials}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[#1e325c]">{user.ho_ten || "Chưa có tên"}</h1>
-              <p className="text-sm text-slate-500 mt-0.5">@{user.username}</p>
-              <div className="mt-2">
-                {user.kich_hoat ? (
+              <h1 className="text-xl font-bold text-[#1e325c]">{student.ho_ten || "Chưa có tên"}</h1>
+              <p className="text-sm text-slate-500 mt-0.5">@{student.username}</p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {isActive ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Hoạt động
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold border border-red-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Bị khóa
+                  </span>
+                )}
+                {student.ten_lop && (
+                  <span className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">
+                    {student.ten_lop}
                   </span>
                 )}
               </div>
@@ -195,7 +207,7 @@ export default function StudentDetailPage() {
               className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors">
               <Pencil size={16} /> Chỉnh sửa
             </button>
-            {user.kich_hoat ? (
+            {isActive ? (
               <button onClick={() => { setLockMinutes("15"); setShowLockModal(true) }}
                 className="flex items-center gap-2 px-4 py-2 border border-amber-300 text-amber-600 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
                 <LockKeyhole size={16} /> Khóa TK
@@ -215,25 +227,37 @@ export default function StudentDetailPage() {
       </div>
 
       {/* INFO GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <InfoCard icon={<Mail size={18} />} label="Email" value={user.email || "Chưa cập nhật"} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+        <InfoCard icon={<Mail size={18} />} label="Email" value={student.email || "Chưa cập nhật"} />
+        <InfoCard icon={<Phone size={18} />} label="Số điện thoại" value={student.sdt || "Chưa cập nhật"} />
         <InfoCard icon={<Calendar size={18} />} label="Ngày tạo tài khoản"
-          value={user.created_at ? new Date(user.created_at).toLocaleDateString("vi-VN") : "—"} />
-        <InfoCard icon={<Clock size={18} />} label="Lần đăng nhập cuối"
-          value={user.last_login ? new Date(user.last_login).toLocaleString("vi-VN") : "Chưa đăng nhập"} />
-        <InfoCard icon={<AlertTriangle size={18} />} label="Số lần đăng nhập sai"
-          value={String(user.failed_attempts ?? 0)}
-          valueClass={user.failed_attempts >= 3 ? "text-amber-600" : undefined} />
-        {user.lock_until && new Date(user.lock_until) > new Date() && (
-          <InfoCard icon={<LockKeyhole size={18} />} label="Tài khoản bị khóa đến"
-            value={new Date(user.lock_until).toLocaleString("vi-VN")}
-            valueClass="text-red-600" />
+          value={student.created_at ? new Date(student.created_at).toLocaleDateString("vi-VN") : "—"} />
+        {account && (
+          <>
+            <InfoCard icon={<Clock size={18} />} label="Lần đăng nhập cuối"
+              value={account.last_login ? new Date(account.last_login).toLocaleString("vi-VN") : "Chưa đăng nhập"} />
+            <InfoCard icon={<AlertTriangle size={18} />} label="Số lần đăng nhập sai"
+              value={String(account.failed_attempts ?? 0)}
+              valueClass={account.failed_attempts >= 3 ? "text-amber-600" : undefined} />
+            {account.lock_until && new Date(account.lock_until) > new Date() && (
+              <InfoCard icon={<LockKeyhole size={18} />} label="Tài khoản bị khóa đến"
+                value={new Date(account.lock_until).toLocaleString("vi-VN")}
+                valueClass="text-red-600" />
+            )}
+          </>
         )}
       </div>
 
-      {/* SECTION LỚP HỌC & ĐIỂM DANH */}
+      {/* MSSV BADGE */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-5 flex items-center gap-3">
+        <span className="text-xs text-slate-500 font-medium">Mã sinh viên</span>
+        <span className="font-mono font-bold text-slate-800 text-base bg-white border border-slate-200 px-3 py-1 rounded-lg">
+          {student.ma_sinh_vien || "—"}
+        </span>
+      </div>
+
+      {/* CLASSES SECTION */}
       <ClassesSection
-        studentProfile={studentProfile}
         classes={classes}
         isLoading={isLoadingClasses}
         error={classesError}
@@ -283,7 +307,7 @@ export default function StudentDetailPage() {
             </div>
             <div className="px-6 py-5 space-y-4">
               <p className="text-sm text-slate-500">Bạn sắp khóa tài khoản của{" "}
-                <span className="font-bold text-slate-800">{user.ho_ten || user.username}</span>.</p>
+                <span className="font-bold text-slate-800">{student.ho_ten || student.username}</span>.</p>
               <div>
                 <label className="text-xs font-bold text-slate-600 mb-2 block">Thời gian khóa</label>
                 <div className="flex gap-2 mb-3">
@@ -323,7 +347,7 @@ export default function StudentDetailPage() {
               <h2 className="text-lg font-bold text-slate-800">Mở khóa tài khoản</h2>
             </div>
             <p className="text-sm text-slate-500 mb-6">Bạn có chắc muốn mở khóa tài khoản của{" "}
-              <span className="font-bold text-slate-800">{user.ho_ten || user.username}</span>?</p>
+              <span className="font-bold text-slate-800">{student.ho_ten || student.username}</span>?</p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowUnlockModal(false)} className="px-4 py-2 text-sm text-slate-600" disabled={isLocking}>Hủy</button>
               <button onClick={handleUnlock} disabled={isLocking}
@@ -341,8 +365,8 @@ export default function StudentDetailPage() {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-2">Xác nhận xóa</h2>
             <p className="text-sm text-slate-500 mb-6">
-              Bạn có chắc muốn xóa tài khoản{" "}
-              <span className="font-bold text-slate-800">{user.ho_ten || user.username}</span>? Hành động này không thể hoàn tác.
+              Bạn có chắc muốn xóa sinh viên{" "}
+              <span className="font-bold text-slate-800">{student.ho_ten || student.username}</span>? Hành động này không thể hoàn tác.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 text-sm text-slate-600" disabled={isDeleting}>Hủy</button>
@@ -358,13 +382,8 @@ export default function StudentDetailPage() {
   )
 }
 
-function InfoCard({
-  icon, label, value, valueClass,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  valueClass?: string
+function InfoCard({ icon, label, value, valueClass }: {
+  icon: React.ReactNode; label: string; value: string; valueClass?: string
 }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
@@ -377,41 +396,15 @@ function InfoCard({
   )
 }
 
-// ─── Attendance helpers ───────────────────────────────────────────────────────
-
-function getAttendanceStatus(soNghi: number): {
-  label: string
-  cls: string
-  dot: string
-} {
-  if (soNghi > 2)
-    return { label: "Cấm thi", cls: "bg-red-50 text-red-600 border-red-100", dot: "bg-red-500" }
-  if (soNghi === 2)
-    return { label: "Cảnh báo cấm thi", cls: "bg-amber-50 text-amber-600 border-amber-100", dot: "bg-amber-500" }
+function getAttendanceStatus(soNghi: number) {
+  if (soNghi > 2) return { label: "Cấm thi", cls: "bg-red-50 text-red-600 border-red-100", dot: "bg-red-500" }
+  if (soNghi === 2) return { label: "Cảnh báo cấm thi", cls: "bg-amber-50 text-amber-600 border-amber-100", dot: "bg-amber-500" }
   return { label: "Đủ điều kiện", cls: "bg-emerald-50 text-emerald-600 border-emerald-100", dot: "bg-emerald-500" }
 }
 
-function AttendanceBadge({ soNghi }: { soNghi: number }) {
-  const s = getAttendanceStatus(soNghi)
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${s.cls}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {s.label}
-    </span>
-  )
-}
-
-// ─── Classes section ─────────────────────────────────────────────────────────
-
-function ClassesSection({
-  studentProfile, classes, isLoading, error,
-}: {
-  studentProfile: StudentProfile | null
-  classes: StudentClass[]
-  isLoading: boolean
-  error: string
+function ClassesSection({ classes, isLoading, error }: {
+  classes: StudentClass[]; isLoading: boolean; error: string
 }) {
-  // Group classes by semester
   const bySemester = classes.reduce<Record<string, { tenKy: string; batDau: string; items: StudentClass[] }>>(
     (acc, c) => {
       const key = String(c.ky_hoc_id)
@@ -428,21 +421,12 @@ function ClassesSection({
   const totalWarning = classes.filter((c) => c.so_buoi_nghi === 2).length
 
   return (
-    <div className="mt-6">
-      {/* Section header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <BookOpen size={18} className="text-[#1e325c]" />
-          <h2 className="text-base font-bold text-[#1e325c]">Lớp học & Điểm danh</h2>
-        </div>
-        {studentProfile && (
-          <span className="text-xs text-slate-500">
-            Mã SV: <span className="font-bold text-slate-700">{studentProfile.ma_sinh_vien}</span>
-          </span>
-        )}
+    <div className="mt-2">
+      <div className="flex items-center gap-2 mb-3">
+        <BookOpen size={18} className="text-[#1e325c]" />
+        <h2 className="text-base font-bold text-[#1e325c]">Lớp học & Điểm danh</h2>
       </div>
 
-      {/* Summary chips */}
       {!isLoading && !error && classes.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="text-xs bg-slate-100 text-slate-600 rounded-full px-3 py-1 font-medium">
@@ -481,12 +465,10 @@ function ClassesSection({
 
       {!isLoading && !error && semesters.map((sem) => (
         <div key={sem.tenKy} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-4">
-          {/* Semester header */}
           <div className="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-slate-200">
             <span className="text-sm font-bold text-[#1e325c]">{sem.tenKy}</span>
             <span className="text-xs text-slate-400">{sem.items.length} lớp</span>
           </div>
-
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-slate-600">
               <thead className="text-[11px] uppercase text-slate-400 border-b border-slate-100">
@@ -502,9 +484,7 @@ function ClassesSection({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sem.items.map((c) => {
-                  const pct = c.tong_buoi > 0
-                    ? Math.round((c.so_buoi_nghi / c.tong_buoi) * 100)
-                    : 0
+                  const pct = c.tong_buoi > 0 ? Math.round((c.so_buoi_nghi / c.tong_buoi) * 100) : 0
                   const status = getAttendanceStatus(c.so_buoi_nghi)
                   const isBanned = c.so_buoi_nghi > 2
                   return (
@@ -533,15 +513,16 @@ function ClassesSection({
                             {pct}%
                           </span>
                           <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${pct >= 30 ? "bg-red-500" : pct >= 20 ? "bg-amber-400" : "bg-emerald-400"}`}
-                              style={{ width: `${Math.min(pct, 100)}%` }}
-                            />
+                            <div className={`h-full rounded-full ${pct >= 30 ? "bg-red-500" : pct >= 20 ? "bg-amber-400" : "bg-emerald-400"}`}
+                              style={{ width: `${Math.min(pct, 100)}%` }} />
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <AttendanceBadge soNghi={c.so_buoi_nghi} />
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${status.cls}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                          {status.label}
+                        </span>
                         {c.so_tre > 0 && (
                           <p className="text-[10px] text-slate-400 mt-1">{c.so_tre} buổi đi trễ</p>
                         )}
