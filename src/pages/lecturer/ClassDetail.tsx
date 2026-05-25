@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, Link } from "react-router-dom"
 import {
   ArrowLeft, Search, Loader2, Users, UserCheck, UserX, BookOpen,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Bell
 } from "lucide-react"
 import api from "@/api/axios"
+import { useAuth } from "@/contexts/AuthContext"
+import { LecturerService } from "@/services/lecturer.service"
+import SendNotificationModal from "./SendNotificationModal"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ClassSummary {
@@ -18,7 +21,8 @@ interface ClassSummary {
   so_sinh_vien: number
   tong_buoi_da_day: number
   ty_le_co_mat_tb: number | null
-  sv_nguy_co: number
+  si_so: number
+  so_luong_nguy_co: number
 }
 
 interface StudentRow {
@@ -29,6 +33,8 @@ interface StudentRow {
   tong_buoi: number
   so_buoi_vang: number
   so_buoi_co_mat: number
+  so_buoi_tre: number
+  so_buoi_co_phep: number
   ty_le_vang: number | null
 }
 
@@ -60,7 +66,7 @@ function vangColor(v: number | null) {
 function PaginationBar({ pag, onChange }: { pag: Pagination; onChange: (p: number) => void }) {
   const { page, totalPages, total, limit } = pag
   const from = (page - 1) * limit + 1
-  const to   = Math.min(page * limit, total)
+  const to = Math.min(page * limit, total)
 
   const pages: (number | "…")[] = []
   if (totalPages <= 7) {
@@ -97,11 +103,10 @@ function PaginationBar({ pag, onChange }: { pag: Pagination; onChange: (p: numbe
             <button
               key={p}
               onClick={() => onChange(p as number)}
-              className={`w-8 h-8 rounded border text-xs font-semibold transition-colors ${
-                p === page
-                  ? "border-[#8b1a1a] bg-[#8b1a1a] text-white"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-50"
-              }`}
+              className={`w-8 h-8 rounded border text-xs font-semibold transition-colors ${p === page
+                ? "border-[#8b1a1a] bg-[#8b1a1a] text-white"
+                : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
             >
               {p}
             </button>
@@ -115,31 +120,86 @@ function PaginationBar({ pag, onChange }: { pag: Pagination; onChange: (p: numbe
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
+import SessionManager from "./SessionManager"
+import StudentHistoryModal from "./StudentHistoryModal"
+
 export default function ClassDetail() {
   const { id } = useParams<{ id: string }>()
+  const { user } = useAuth()
 
-  const [summary, setSummary]     = useState<ClassSummary | null>(null)
-  const [students, setStudents]   = useState<StudentRow[]>([])
-  const [pag, setPag]             = useState<Pagination | null>(null)
-  const [page, setPage]           = useState(1)
-  const [keyword, setKeyword]     = useState("")
-  const [inputVal, setInputVal]   = useState("")
-  const [loadSum, setLoadSum]     = useState(true)
-  const [loadStd, setLoadStd]     = useState(true)
-  const [error, setError]         = useState("")
-  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [activeTab, setActiveTab] = useState<"SESSIONS" | "STUDENTS">("SESSIONS")
 
-  // Fetch summary
+  const [summary, setSummary] = useState<ClassSummary | null>(null)
+  const [students, setStudents] = useState<StudentRow[]>([])
+  const [pag, setPag] = useState<Pagination | null>(null)
+  const [page, setPage] = useState(1)
+  const [keyword, setKeyword] = useState("")
+  const [inputVal, setInputVal] = useState("")
+  const [loadSum, setLoadSum] = useState(true)
+  const [loadStd, setLoadStd] = useState(true)
+  const [error, setError] = useState("")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // State for manual attendance
+  const [selectedStudent, setSelectedStudent] = useState<any>(null)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
+  const [addSvCode, setAddSvCode] = useState("")
+  const [addingSv, setAddingSv] = useState(false)
+  const [reloadTick, setReloadTick] = useState(0)
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!addSvCode.trim()) return
+    setAddingSv(true)
+    try {
+      await api.post(`/course-classes/${id}/register`, { ma_sinh_vien: addSvCode.trim() })
+      alert("Thêm sinh viên thành công!")
+      setAddSvCode("")
+      setReloadTick(prev => prev + 1)
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi thêm sinh viên.")
+    } finally {
+      setAddingSv(false)
+    }
+  }
+
+  const handleRemoveStudent = async (sv: StudentRow) => {
+    if (!confirm(`Bạn có chắc muốn xoá/hủy đăng ký sinh viên ${sv.ho_ten} (${sv.ma_sinh_vien}) khỏi lớp này?`)) return
+    try {
+      await api.delete(`/course-classes/${id}/register/${sv.id}`)
+      alert("Xoá sinh viên thành công!")
+      setReloadTick(prev => prev + 1)
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi xoá sinh viên.")
+    }
+  }
+
+  // Fetch summary via LecturerService
   useEffect(() => {
-    if (!id) return
+    if (!id || !user) return
     let cancelled = false
     setLoadSum(true)
-    api.get(`/course-classes/${id}/summary`)
-      .then(res => { if (!cancelled) setSummary(res.data.data) })
-      .catch(() => { if (!cancelled) setError("Không thể tải thông tin lớp.") })
-      .finally(() => { if (!cancelled) setLoadSum(false) })
+
+    const fetchSummary = async () => {
+      try {
+        const allLecturers = await LecturerService.getAll()
+        const me = allLecturers.find((l) => l.username === user.username)
+        if (!me) throw new Error("Giảng viên không hợp lệ")
+
+        const classes = await LecturerService.getCourseClasses(me.id)
+        const myClass = classes?.find((c: any) => c.id.toString() === id)
+        if (!myClass) throw new Error("Không tìm thấy lớp học.")
+
+        if (!cancelled) setSummary(myClass as any)
+      } catch (err: any) {
+        if (!cancelled) setError("Lỗi khi tải thông tin lớp: " + err.message)
+      } finally {
+        if (!cancelled) setLoadSum(false)
+      }
+    }
+    fetchSummary()
     return () => { cancelled = true }
-  }, [id])
+  }, [id, user, reloadTick])
 
   // Fetch students (page + keyword)
   useEffect(() => {
@@ -155,10 +215,15 @@ export default function ClassDetail() {
           setPag(res.data.pagination ?? null)
         }
       })
-      .catch(() => { if (!cancelled) setError("Không thể tải danh sách sinh viên.") })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error(err)
+          setError(prev => prev || "Không thể tải danh sách sinh viên.")
+        }
+      })
       .finally(() => { if (!cancelled) setLoadStd(false) })
     return () => { cancelled = true }
-  }, [id, page, keyword])
+  }, [id, page, keyword, reloadTick])
 
   // Debounce search
   const handleSearch = (val: string) => {
@@ -185,8 +250,8 @@ export default function ClassDetail() {
     return <div className="text-center py-20 text-sm text-red-500">{error}</div>
   }
 
-  const attendRate = summary?.ty_le_co_mat_tb ?? 0
-  const doneRatio  = summary
+  const attendRate = Number(summary?.ty_le_co_mat_tb ?? 0)
+  const doneRatio = summary
     ? `${summary.tong_buoi_da_day} buổi đã học`
     : "—"
 
@@ -220,13 +285,19 @@ export default function ClassDetail() {
               {summary.ten_giang_vien} &bull; {summary.so_tin_chi} tín chỉ &bull; {summary.ten_ky}
             </p>
           </div>
+          <button
+            onClick={() => setShowNotificationModal(true)}
+            className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-blue-200 shadow-sm self-start mt-2 md:mt-0"
+          >
+            <Bell size={18} /> Gửi thông báo
+          </button>
         </div>
       )}
 
       {/* STAT CARDS */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={<Users size={22} />} color="blue" label="Tổng sinh viên" value={summary.so_sinh_vien} />
+          <StatCard icon={<Users size={22} />} color="blue" label="Tổng sinh viên" value={summary.si_so} />
           <StatCard
             icon={<UserCheck size={22} />}
             color="emerald"
@@ -237,126 +308,217 @@ export default function ClassDetail() {
             icon={<UserX size={22} />}
             color="red"
             label="Nguy cơ cấm thi (≥20%)"
-            value={summary.sv_nguy_co}
+            value={summary.so_luong_nguy_co}
           />
           <StatCard icon={<BookOpen size={22} />} color="indigo" label="Tiến độ" value={doneRatio} />
         </div>
       )}
 
-      {/* STUDENT TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      {/* TABS */}
+      <div className="flex items-center gap-6 border-b border-slate-200 mt-2">
+        <button
+          onClick={() => setActiveTab("SESSIONS")}
+          className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === "SESSIONS" ? "text-[#8b1a1a]" : "text-slate-500 hover:text-slate-700"}`}
+        >
+          Quản lý buổi học
+          {activeTab === "SESSIONS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8b1a1a] rounded-t-lg" />}
+        </button>
+        <button
+          onClick={() => setActiveTab("STUDENTS")}
+          className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === "STUDENTS" ? "text-[#8b1a1a]" : "text-slate-500 hover:text-slate-700"}`}
+        >
+          Danh sách sinh viên
+          {activeTab === "STUDENTS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8b1a1a] rounded-t-lg" />}
+        </button>
+      </div>
 
-        {/* Toolbar */}
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-[#8b1a1a] text-base">Danh sách chuyên cần</h3>
-            {pag && (
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">
-                {pag.total}
-              </span>
+      {activeTab === "SESSIONS" && (
+        <SessionManager classId={Number(id)} />
+      )}
+
+      {activeTab === "STUDENTS" && (
+        <>
+          {/* STUDENT TABLE */}
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mt-1">
+
+            {/* Toolbar */}
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-[#8b1a1a] text-base">Danh sách chuyên cần</h3>
+                {pag && (
+                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                    {pag.total}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-4">
+                <form onSubmit={handleAddStudent} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={addSvCode}
+                    onChange={(e) => setAddSvCode(e.target.value)}
+                    placeholder="Mã SV để thêm (VD: SV001)"
+                    className="pl-3 pr-2 py-1.5 border border-slate-300 rounded text-sm w-48 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 uppercase"
+                    disabled={addingSv}
+                  />
+                  <button
+                    type="submit"
+                    disabled={addingSv || !addSvCode.trim()}
+                    className="bg-emerald-600 text-white text-sm font-semibold px-3 py-1.5 rounded hover:bg-emerald-700 disabled:opacity-60 transition"
+                  >
+                    {addingSv ? "..." : "+ Thêm"}
+                  </button>
+                </form>
+
+                <div className="relative">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={inputVal}
+                    onChange={e => handleSearch(e.target.value)}
+                    placeholder="Tìm MSSV, họ tên..."
+                    className="pl-8 pr-4 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:border-[#8b1a1a] focus:ring-1 focus:ring-[#8b1a1a] w-56"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-[#8b1a1a] text-white text-xs">
+                    {["STT", "MSSV", "Họ và tên", "Tổng buổi", "Vắng", "Trễ", "Phép", "Có mặt", "Tỷ lệ vắng", "Trạng thái", "Thao tác"].map(h => (
+                      <th key={h} className="py-3 px-4 font-bold whitespace-nowrap border-r border-[#6e1414] last:border-r-0">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {loadStd ? (
+                    <tr>
+                      <td colSpan={11} className="py-16 text-center">
+                        <Loader2 size={22} className="animate-spin text-slate-400 mx-auto" />
+                      </td>
+                    </tr>
+                  ) : students.length === 0 ? (
+                    <tr>
+                      <td colSpan={11} className="py-14 text-center text-sm text-slate-400">
+                        {keyword ? "Không tìm thấy sinh viên phù hợp." : "Chưa có sinh viên trong lớp này."}
+                      </td>
+                    </tr>
+                  ) : (
+                    students.map((sv, idx) => {
+                      const stt = ((page - 1) * PAGE_SIZE) + idx + 1
+                      const vang = Number(sv.so_buoi_vang ?? 0)
+                      const rate = Number(sv.ty_le_vang ?? 0)
+                      return (
+                        <tr key={sv.id} className={`hover:bg-[#fdf8f8] transition-colors ${rate >= 20 ? "bg-red-50/40" : ""}`}>
+                          <td className="py-3 px-4 text-slate-500 text-center font-medium">{stt}</td>
+                          <td className="py-3 px-4 font-mono font-bold text-slate-700 text-xs">{sv.ma_sinh_vien}</td>
+                          <td className="py-3 px-4 font-semibold text-slate-800">{sv.ho_ten}</td>
+                          <td className="py-3 px-4 text-center text-slate-600">{sv.tong_buoi}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={vangColor(sv.ty_le_vang)}>{vang}</span>
+                          </td>
+                          <td className="py-3 px-4 text-center text-amber-600">{sv.so_buoi_tre ?? 0}</td>
+                          <td className="py-3 px-4 text-center text-blue-600">{sv.so_buoi_co_phep ?? 0}</td>
+                          <td className="py-3 px-4 text-center text-emerald-700">{sv.so_buoi_co_mat ?? 0}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className={`text-sm ${vangColor(sv.ty_le_vang)}`}>{rate.toFixed(1)}%</span>
+                          </td>
+                          <td className="py-3 px-4">{riskBadge(sv.ty_le_vang)}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setSelectedStudent(sv)}
+                                className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                                title="Xem LS Chuyên cần & Sửa"
+                              >
+                                Chi tiết
+                              </button>
+                              <button
+                                onClick={() => handleRemoveStudent(sv)}
+                                className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 hover:bg-red-100 transition-colors"
+                                title="Xoá sinh viên khỏi lớp"
+                              >
+                                Xoá
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pag && pag.totalPages > 1 && (
+              <PaginationBar pag={pag} onChange={handlePageChange} />
+            )}
+            {pag && pag.totalPages <= 1 && students.length > 0 && (
+              <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-400">
+                Tổng {pag.total} sinh viên
+              </div>
             )}
           </div>
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={inputVal}
-              onChange={e => handleSearch(e.target.value)}
-              placeholder="Tìm MSSV, họ tên..."
-              className="pl-8 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#8b1a1a] focus:ring-1 focus:ring-[#8b1a1a] w-56"
-            />
+
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 px-1">
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm bg-red-50 border border-red-200 inline-block" />
+              Cấm thi: vắng ≥ 20%
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm bg-orange-50 border border-orange-200 inline-block" />
+              Cảnh báo: vắng 10–20%
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm bg-emerald-50 border border-emerald-200 inline-block" />
+              Bình thường: vắng &lt; 10%
+            </span>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-[#8b1a1a] text-white text-xs">
-                {["STT", "MSSV", "Họ và tên", "Lớp HC", "Tổng buổi", "Vắng", "Có mặt", "Tỷ lệ vắng", "Trạng thái"].map(h => (
-                  <th key={h} className="py-3 px-4 font-bold whitespace-nowrap border-r border-[#6e1414] last:border-r-0">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loadStd ? (
-                <tr>
-                  <td colSpan={9} className="py-16 text-center">
-                    <Loader2 size={22} className="animate-spin text-slate-400 mx-auto" />
-                  </td>
-                </tr>
-              ) : students.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-14 text-center text-sm text-slate-400">
-                    {keyword ? "Không tìm thấy sinh viên phù hợp." : "Chưa có sinh viên trong lớp này."}
-                  </td>
-                </tr>
-              ) : (
-                students.map((sv, idx) => {
-                  const stt   = ((page - 1) * PAGE_SIZE) + idx + 1
-                  const vang  = sv.so_buoi_vang ?? 0
-                  const rate  = sv.ty_le_vang ?? 0
-                  return (
-                    <tr key={sv.id} className={`hover:bg-[#fdf8f8] transition-colors ${rate >= 20 ? "bg-red-50/40" : ""}`}>
-                      <td className="py-3 px-4 text-slate-500 text-center font-medium">{stt}</td>
-                      <td className="py-3 px-4 font-mono font-bold text-slate-700 text-xs">{sv.ma_sinh_vien}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{sv.ho_ten}</td>
-                      <td className="py-3 px-4 text-slate-500 text-xs">{sv.ten_lop ?? "—"}</td>
-                      <td className="py-3 px-4 text-center text-slate-600">{sv.tong_buoi}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={vangColor(sv.ty_le_vang)}>{vang}</span>
-                      </td>
-                      <td className="py-3 px-4 text-center text-emerald-700">{sv.so_buoi_co_mat ?? 0}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`text-sm ${vangColor(sv.ty_le_vang)}`}>{rate.toFixed(1)}%</span>
-                      </td>
-                      <td className="py-3 px-4">{riskBadge(sv.ty_le_vang)}</td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+      {selectedStudent && (
+        <StudentHistoryModal
+          student={selectedStudent}
+          classId={id as string}
+          onClose={() => setSelectedStudent(null)}
+          onUpdateSuccess={() => {
+            // Tải lại 2 list nếu có sửa đổi
+            setLoadStd(true)
+            api.get(`/course-classes/${id}/students`, {
+              params: { page, limit: PAGE_SIZE, keyword },
+            }).then(res => {
+              setStudents(res.data.data ?? [])
+              setPag(res.data.pagination ?? null)
+            }).finally(() => setLoadStd(false))
+          }}
+        />
+      )}
 
-        {/* Pagination */}
-        {pag && pag.totalPages > 1 && (
-          <PaginationBar pag={pag} onChange={handlePageChange} />
-        )}
-        {pag && pag.totalPages <= 1 && students.length > 0 && (
-          <div className="px-4 py-3 border-t border-slate-100 text-xs text-slate-400">
-            Tổng {pag.total} sinh viên
-          </div>
-        )}
-      </div>
-
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 px-1">
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-red-50 border border-red-200 inline-block" />
-          Cấm thi: vắng ≥ 20%
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-orange-50 border border-orange-200 inline-block" />
-          Cảnh báo: vắng 10–20%
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-sm bg-emerald-50 border border-emerald-200 inline-block" />
-          Bình thường: vắng &lt; 10%
-        </span>
-      </div>
+      {showNotificationModal && summary && (
+        <SendNotificationModal
+          classId={id as string}
+          classNameStr={summary.ten_hoc_phan + " (" + summary.ma_lop + ")"}
+          onClose={() => setShowNotificationModal(false)}
+        />
+      )}
     </div>
   )
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 const COLOR_MAP = {
-  blue:    { wrap: "bg-blue-50 text-blue-600",     text: "text-[#1a3a5f]" },
+  blue: { wrap: "bg-blue-50 text-blue-600", text: "text-[#1a3a5f]" },
   emerald: { wrap: "bg-emerald-50 text-emerald-600", text: "text-emerald-700" },
-  red:     { wrap: "bg-red-50 text-red-500",        text: "text-red-600" },
-  indigo:  { wrap: "bg-indigo-50 text-indigo-600",  text: "text-indigo-700" },
+  red: { wrap: "bg-red-50 text-red-500", text: "text-red-600" },
+  indigo: { wrap: "bg-indigo-50 text-indigo-600", text: "text-indigo-700" },
 } as const
 
 function StatCard({

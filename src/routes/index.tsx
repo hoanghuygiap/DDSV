@@ -14,7 +14,9 @@ import LecturerDetailPage from "@/pages/admin/LecturerDetail"
 import ClassesPage from "@/pages/admin/Classes"
 import NotificationsPage from "@/pages/admin/Notifications"
 import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
+import MyClassesPage from "@/pages/lecturer/MyClasses"
 import ClassDetailPage from "@/pages/lecturer/ClassDetail"
+import LiveAttendanceQRPage from "@/pages/lecturer/LiveAttendanceQR"
 
 export const router = createBrowserRouter([
   {
@@ -70,8 +72,16 @@ export const router = createBrowserRouter([
         element: <LecturerSchedulePage />,
       },
       {
+        path: "my-classes",
+        element: <MyClassesPage />,
+      },
+      {
         path: "my-classes/:id",
         element: <ClassDetailPage />,
+      },
+      {
+        path: "qr-attendance",
+        element: <LiveAttendanceQRPage />,
       },
       {
         path: "reports",

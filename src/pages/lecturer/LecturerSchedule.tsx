@@ -6,7 +6,7 @@ import type { Lecturer } from "@/types/user.type"
 
 // ─── Tiết schedule (Đại học Thăng Long) ──────────────────────────────────────
 const TIET_INFO = [
-  { tiet: 1, start: 7 * 60 + 0,  end: 7 * 60 + 50, label: "07:00-07:50" },
+  { tiet: 1, start: 7 * 60 + 0, end: 7 * 60 + 50, label: "07:00-07:50" },
   { tiet: 2, start: 7 * 60 + 50, end: 8 * 60 + 40, label: "07:50-08:40" },
   { tiet: 3, start: 8 * 60 + 40, end: 9 * 60 + 30, label: "08:40-09:30" },
   { tiet: 4, start: 9 * 60 + 45, end: 10 * 60 + 35, label: "09:45-10:35" },
@@ -63,14 +63,14 @@ function timeToStartTiet(t: string): number {
   const mins = toMins(t)
   return TIET_INFO.reduce((best, ti) =>
     Math.abs(ti.start - mins) < Math.abs(TIET_INFO[best - 1].start - mins) ? ti.tiet : best
-  , 1)
+    , 1)
 }
 
 function timeToEndTiet(t: string): number {
   const mins = toMins(t)
   return TIET_INFO.reduce((best, ti) =>
     Math.abs(ti.end - mins) < Math.abs(TIET_INFO[best - 1].end - mins) ? ti.tiet : best
-  , 1)
+    , 1)
 }
 
 function getMonday(d: Date): Date {
@@ -144,7 +144,7 @@ export default function LecturerSchedulePage() {
       setError("")
       try {
         const all = await LecturerService.getAll()
-        const me = all.find((l) => l.tai_khoan_id === user.id)
+        const me = all.find((l) => l.username === user.username)
         if (!me) throw new Error("Không tìm thấy hồ sơ giảng viên.")
         setLecturer(me)
         const [sched, classes] = await Promise.all([
@@ -291,11 +291,10 @@ export default function LecturerSchedulePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as "tuan" | "thu-tiet")}
-            className={`px-6 py-3 text-sm font-bold tracking-wide border-b-2 transition-colors ${
-              activeTab === tab.key
+            className={`px-6 py-3 text-sm font-bold tracking-wide border-b-2 transition-colors ${activeTab === tab.key
                 ? "border-[#8b1a1a] text-[#8b1a1a]"
                 : "border-transparent text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             {tab.label}
           </button>
