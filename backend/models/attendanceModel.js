@@ -195,9 +195,8 @@ class AttendanceModel {
         return rows;
     }
 
-    static async getByStudent(studentId, limit, offset) {
-        const [rows] = await db.query(
-            `
+    static async getByStudent(studentId, lopMonHocId, limit, offset) {
+        let sql = `
             SELECT
                 dd.id,
                 dd.buoi_hoc_id,
@@ -219,25 +218,33 @@ class AttendanceModel {
             JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
             LEFT JOIN phong_hoc ph ON bh.phong_hoc_id = ph.id
             WHERE dd.sinh_vien_id = ?
-            ORDER BY bh.ngay_hoc DESC, bh.gio_bat_dau DESC
-            LIMIT ? OFFSET ?
-            `,
-            [studentId, limit, offset]
-        );
+        `;
+        let params = [studentId];
+        if (lopMonHocId) {
+            sql += `  AND bh.lop_mon_hoc_id = ? `;
+            params.push(lopMonHocId);
+        }
+        sql += ` ORDER BY bh.ngay_hoc DESC, bh.gio_bat_dau DESC LIMIT ? OFFSET ? `;
+        params.push(limit, offset);
 
+        const [rows] = await db.query(sql, params);
         return rows;
     }
 
-    static async countByStudent(studentId) {
-        const [rows] = await db.query(
-            `
+    static async countByStudent(studentId, lopMonHocId) {
+        let sql = `
             SELECT COUNT(*) AS total
-            FROM diem_danh
-            WHERE sinh_vien_id = ?
-            `,
-            [studentId]
-        );
+            FROM diem_danh dd
+            JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id
+            WHERE dd.sinh_vien_id = ?
+        `;
+        let params = [studentId];
+        if (lopMonHocId) {
+            sql += ` AND bh.lop_mon_hoc_id = ? `;
+            params.push(lopMonHocId);
+        }
 
+        const [rows] = await db.query(sql, params);
         return rows[0].total;
     }
 

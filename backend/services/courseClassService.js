@@ -146,16 +146,25 @@ class CourseClassService {
         return await CourseClassModel.countStudents(classId);
     }
 
-    static async registerStudent(classId, studentId) {
+    static async registerStudent(classId, studentId, user) {
         const courseClass = await CourseClassModel.getById(classId);
 
         if (!courseClass) {
             throw new Error('Lớp môn học không tồn tại');
         }
 
-        const student = await CourseClassModel.getStudentById(studentId);
+        // [SECURITY CHECK] Kiểm tra quyền nếu là giáo viên
+        if (user && user.vai_tro && !user.vai_tro.includes('admin')) {
+            const db = require('../config/db');
+            const [gvRows] = await db.query('SELECT id FROM giang_vien WHERE tai_khoan_id = ?', [user.id]);
+            if (gvRows.length === 0 || gvRows[0].id !== courseClass.giang_vien_id) {
+                throw new Error('Từ chối: Bạn không phải giảng viên phụ trách lớp này.');
+            }
+        }
 
-        if (!student) {
+        const db = require('../config/db');
+        const [svRows] = await db.query('SELECT id FROM sinh_vien WHERE id = ?', [studentId]);
+        if (svRows.length === 0) {
             throw new Error('Sinh viên không tồn tại');
         }
 
@@ -165,7 +174,7 @@ class CourseClassService {
         );
 
         if (registered) {
-            throw new Error('Sinh viên đã đăng ký lớp này');
+            throw new Error('Cảnh báo: Sinh viên này đã tồn tại trong danh sách lớp (Tránh đăng ký trùng).');
         }
 
         await CourseClassModel.registerStudent(classId, studentId);
@@ -173,7 +182,22 @@ class CourseClassService {
         return true;
     }
 
-    static async unregisterStudent(classId, studentId) {
+    static async unregisterStudent(classId, studentId, user) {
+        const courseClass = await CourseClassModel.getById(classId);
+
+        if (!courseClass) {
+            throw new Error('Lớp môn học không tồn tại');
+        }
+
+        // [SECURITY CHECK] Kiểm tra quyền nếu là giáo viên
+        if (user && user.vai_tro && !user.vai_tro.includes('admin')) {
+            const db = require('../config/db');
+            const [gvRows] = await db.query('SELECT id FROM giang_vien WHERE tai_khoan_id = ?', [user.id]);
+            if (gvRows.length === 0 || gvRows[0].id !== courseClass.giang_vien_id) {
+                throw new Error('Từ chối: Bạn không phải giảng viên phụ trách lớp này.');
+            }
+        }
+
         const registered = await CourseClassModel.checkRegistered(
             classId,
             studentId
@@ -181,6 +205,13 @@ class CourseClassService {
 
         if (!registered) {
             throw new Error('Sinh viên chưa đăng ký lớp này');
+        }
+
+        // [BUSINESS LOGIC] Kiểm tra dữ liệu điểm danh
+        const db = require('../config/db');
+        const [attCount] = await db.query(`SELECT count(id) as c FROM diem_danh WHERE sinh_vien_id = ? AND buoi_hoc_id IN (SELECT id FROM buoi_hoc WHERE lop_mon_hoc_id = ?)`, [studentId, classId]);
+        if (attCount[0].c > 0) {
+            throw new Error('Thất bại: Sinh viên này đã tham gia điểm danh (' + attCount[0].c + ' lần) trong lớp này. Không thể xoá hoàn toàn, chỉ có thể đánh rớt/cấm thi!');
         }
 
         await CourseClassModel.unregisterStudent(classId, studentId);
@@ -207,64 +238,64 @@ class CourseClassService {
 
         return await this.unregisterStudent(classId, student.id);
     }
-    
+
     // import excel file 
     static async importStudents(classId, students) {
-    const courseClass = await CourseClassModel.getById(classId);
+        const courseClass = await CourseClassModel.getById(classId);
 
-    if (!courseClass) {
-        throw new Error('Lớp môn học không tồn tại');
+        if (!courseClass) {
+            throw new Error('Lớp môn học không tồn tại');
+        }
+
+        const result = {
+            success: [],
+            failed: []
+        };
+
+        for (const item of students) {
+            const ma_sinh_vien = String(item.ma_sinh_vien || '').trim();
+
+            if (!ma_sinh_vien) {
+                result.failed.push({
+                    ma_sinh_vien,
+                    reason: 'Thiếu mã sinh viên'
+                });
+                continue;
+            }
+
+            const student = await CourseClassModel.getStudentByCode(ma_sinh_vien);
+
+            if (!student) {
+                result.failed.push({
+                    ma_sinh_vien,
+                    reason: 'Sinh viên không tồn tại'
+                });
+                continue;
+            }
+
+            const registered = await CourseClassModel.checkRegistered(
+                classId,
+                student.id
+            );
+
+            if (registered) {
+                result.failed.push({
+                    ma_sinh_vien,
+                    reason: 'Sinh viên đã đăng ký lớp này'
+                });
+                continue;
+            }
+
+            await CourseClassModel.registerStudent(classId, student.id);
+
+            result.success.push({
+                ma_sinh_vien,
+                sinh_vien_id: student.id
+            });
+        }
+
+        return result;
     }
-
-    const result = {
-        success: [],
-        failed: []
-    };
-
-    for (const item of students) {
-        const ma_sinh_vien = String(item.ma_sinh_vien || '').trim();
-
-        if (!ma_sinh_vien) {
-            result.failed.push({
-                ma_sinh_vien,
-                reason: 'Thiếu mã sinh viên'
-            });
-            continue;
-        }
-
-        const student = await CourseClassModel.getStudentByCode(ma_sinh_vien);
-
-        if (!student) {
-            result.failed.push({
-                ma_sinh_vien,
-                reason: 'Sinh viên không tồn tại'
-            });
-            continue;
-        }
-
-        const registered = await CourseClassModel.checkRegistered(
-            classId,
-            student.id
-        );
-
-        if (registered) {
-            result.failed.push({
-                ma_sinh_vien,
-                reason: 'Sinh viên đã đăng ký lớp này'
-            });
-            continue;
-        }
-
-        await CourseClassModel.registerStudent(classId, student.id);
-
-        result.success.push({
-            ma_sinh_vien,
-            sinh_vien_id: student.id
-        });
-    }
-
-    return result;
-}
 }
 
 module.exports = CourseClassService;

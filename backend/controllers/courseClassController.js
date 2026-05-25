@@ -128,18 +128,28 @@ class CourseClassController {
 
     static async registerStudent(req, res) {
         try {
-            const { studentId } = req.body;
+            let { studentId, ma_sinh_vien } = req.body;
 
-            if (!studentId) {
+            if (!studentId && !ma_sinh_vien) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Thiếu studentId'
+                    message: 'Yêu cầu truyền studentId hoặc ma_sinh_vien'
                 });
+            }
+
+            if (!studentId && ma_sinh_vien) {
+                const db = require('../config/db');
+                const [svRows] = await db.query('SELECT id FROM sinh_vien WHERE ma_sinh_vien = ?', [ma_sinh_vien]);
+                if (svRows.length === 0) {
+                    return res.status(400).json({ success: false, message: 'Không tìm thấy sinh viên có mã này' });
+                }
+                studentId = svRows[0].id;
             }
 
             await CourseClassService.registerStudent(
                 req.params.id,
-                studentId
+                studentId,
+                req.user
             );
 
             return res.status(201).json({
@@ -158,7 +168,8 @@ class CourseClassController {
         try {
             await CourseClassService.unregisterStudent(
                 req.params.id,
-                req.params.studentId
+                req.params.studentId,
+                req.user
             );
 
             return res.json({
@@ -211,43 +222,43 @@ class CourseClassController {
         }
     }
     static async importStudents(req, res) {
-    try {
-        if (!req.file) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Vui lòng upload file Excel'
+                });
+            }
+
+            const workbook = xlsx.readFile(req.file.path);
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+
+            const students = xlsx.utils.sheet_to_json(sheet);
+
+            fs.unlinkSync(req.file.path);
+
+            const data = await CourseClassService.importStudents(
+                req.params.id,
+                students
+            );
+
+            return res.json({
+                success: true,
+                message: 'Import danh sách sinh viên hoàn tất',
+                data
+            });
+        } catch (error) {
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+
             return res.status(400).json({
                 success: false,
-                message: 'Vui lòng upload file Excel'
+                message: error.message
             });
         }
-
-        const workbook = xlsx.readFile(req.file.path);
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-
-        const students = xlsx.utils.sheet_to_json(sheet);
-
-        fs.unlinkSync(req.file.path);
-
-        const data = await CourseClassService.importStudents(
-            req.params.id,
-            students
-        );
-
-        return res.json({
-            success: true,
-            message: 'Import danh sách sinh viên hoàn tất',
-            data
-        });
-    } catch (error) {
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
-
-        return res.status(400).json({
-            success: false,
-            message: error.message
-        });
     }
-   }
 }
 
 module.exports = CourseClassController;

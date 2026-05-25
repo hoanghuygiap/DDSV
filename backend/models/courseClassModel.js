@@ -123,27 +123,36 @@ class CourseClassModel {
         return result.affectedRows;
     }
 
-    static async getStudents(
-        classId,
-        limit,
-        offset
-    ) {
+    static async getStudents(classId, limit, offset) {
         const [rows] = await db.query(
             `
             SELECT
                 sv.id,
-                sv.ma_sv,
+                sv.ma_sinh_vien,
                 sv.ho_ten,
-                lhc.ten_lop
+                lhc.ten_lop,
+                (SELECT COUNT(*) FROM buoi_hoc bh WHERE bh.lop_mon_hoc_id = ?) AS tong_buoi,
+                (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id 
+                 WHERE bh.lop_mon_hoc_id = ? AND dd.sinh_vien_id = sv.id AND dd.trang_thai = 'co_mat') AS so_buoi_co_mat,
+                (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id 
+                 WHERE bh.lop_mon_hoc_id = ? AND dd.sinh_vien_id = sv.id AND dd.trang_thai = 'vang') AS so_buoi_vang,
+                (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id 
+                 WHERE bh.lop_mon_hoc_id = ? AND dd.sinh_vien_id = sv.id AND dd.trang_thai = 'tre') AS so_buoi_tre,
+                (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id 
+                 WHERE bh.lop_mon_hoc_id = ? AND dd.sinh_vien_id = sv.id AND dd.trang_thai = 'co_phep') AS so_buoi_co_phep,
+                ROUND((
+                  (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id 
+                   WHERE bh.lop_mon_hoc_id = ? AND dd.sinh_vien_id = sv.id AND dd.trang_thai = 'vang')
+                  / NULLIF((SELECT COUNT(*) FROM buoi_hoc bh WHERE bh.lop_mon_hoc_id = ?), 0)
+                ) * 100, 2) AS ty_le_vang
             FROM dang_ky_lop dkl
-            LEFT JOIN sinh_vien sv
-                ON dkl.sinh_vien_id = sv.id
-            LEFT JOIN lop_hanh_chinh lhc
-                ON sv.lop_hanh_chinh_id = lhc.id
+            JOIN sinh_vien sv ON dkl.sinh_vien_id = sv.id
+            LEFT JOIN lop_hanh_chinh lhc ON sv.lop_id = lhc.id
             WHERE dkl.lop_mon_hoc_id = ?
+            ORDER BY sv.ma_sinh_vien ASC
             LIMIT ? OFFSET ?
             `,
-            [classId, limit, offset]
+            [classId, classId, classId, classId, classId, classId, classId, classId, limit, offset]
         );
 
         return rows;
@@ -209,17 +218,17 @@ class CourseClassModel {
         return rows[0];
     }
     static async getStudentByCode(ma_sinh_vien) {
-    const [rows] = await db.query(
-        `
+        const [rows] = await db.query(
+            `
         SELECT *
         FROM sinh_vien
         WHERE ma_sinh_vien = ?
         AND deleted_at IS NULL
         `,
-        [ma_sinh_vien]
-    );
+            [ma_sinh_vien]
+        );
 
-    return rows[0];
+        return rows[0];
     }
 }
 

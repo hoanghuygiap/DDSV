@@ -110,7 +110,8 @@ const AuthService = {
 
     // Đổi mật khẩu
     changePassword: async (userId, currentPassword, newPassword) => {
-        const [rows] = await require('./db').query('SELECT password_hash FROM tai_khoan WHERE id = ?', [userId]);
+        const db = require('../config/db');
+        const [rows] = await db.query('SELECT password_hash FROM tai_khoan WHERE id = ?', [userId]);
         const user = rows[0];
 
         if (!user) throw new Error('Người dùng không tồn tại.');

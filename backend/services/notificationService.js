@@ -60,6 +60,18 @@ class NotificationService {
                 throw new Error('Thiếu course_class_id');
             }
 
+            // [SECURITY CHECK]: Nếu không phải admin thì phải là GV dạy lớp này!
+            const db = require('../config/db');
+            if (!user.vai_tro || !user.vai_tro.includes('admin')) {
+                const [lop_mon] = await db.query('SELECT giang_vien_id FROM lop_mon_hoc WHERE id = ?', [target.course_class_id]);
+                if (lop_mon.length === 0) throw new Error('Lớp môn học không tồn tại');
+
+                const [gvRows] = await db.query('SELECT id FROM giang_vien WHERE tai_khoan_id = ?', [user.id]);
+                if (gvRows.length === 0 || gvRows[0].id !== lop_mon[0].giang_vien_id) {
+                    throw new Error('Bạn không có quyền gửi thông báo tới lớp này (Không phải giảng viên phụ trách)');
+                }
+            }
+
             receiverIds = await NotificationModel.getUserIdsByCourseClass(target.course_class_id);
         }
 

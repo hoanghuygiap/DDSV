@@ -190,7 +190,23 @@ class LecturerModel {
 
                 kh.ten_ky,
                 kh.bat_dau,
-                kh.ket_thuc
+                kh.ket_thuc,
+                
+                (SELECT COUNT(*) FROM dang_ky_lop dkl WHERE dkl.lop_mon_hoc_id = lmh.id) AS si_so,
+                
+                (SELECT COUNT(*) FROM buoi_hoc bh WHERE bh.lop_mon_hoc_id = lmh.id AND bh.trang_thai = 'da_ket_thuc') AS tong_buoi_da_day,
+                
+                ROUND( (SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id WHERE bh.lop_mon_hoc_id = lmh.id AND dd.trang_thai = 'co_mat') / NULLIF((SELECT COUNT(*) FROM diem_danh dd JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id WHERE bh.lop_mon_hoc_id = lmh.id), 0) * 100, 0 ) AS ty_le_co_mat_tb,
+                
+                (
+                    SELECT COUNT(DISTINCT dkl2.sinh_vien_id)
+                    FROM dang_ky_lop dkl2
+                    WHERE dkl2.lop_mon_hoc_id = lmh.id
+                    AND (
+                        (SELECT COUNT(*) FROM diem_danh dd2 JOIN buoi_hoc bh2 ON dd2.buoi_hoc_id = bh2.id WHERE bh2.lop_mon_hoc_id = lmh.id AND dd2.sinh_vien_id = dkl2.sinh_vien_id AND dd2.trang_thai = 'vang')
+                        / NULLIF((SELECT COUNT(*) FROM buoi_hoc bh3 WHERE bh3.lop_mon_hoc_id = lmh.id), 0)
+                    ) >= 0.2
+                ) AS so_luong_nguy_co
 
             FROM lop_mon_hoc lmh
 

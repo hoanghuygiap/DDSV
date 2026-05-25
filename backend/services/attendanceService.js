@@ -163,9 +163,10 @@ class AttendanceService {
         const page = Number(query.page) || 1;
         const limit = Number(query.limit) || 10;
         const offset = (page - 1) * limit;
+        const lopMonHocId = query.lop_mon_hoc_id || null;
 
-        const data = await AttendanceModel.getByStudent(studentId, limit, offset);
-        const total = await AttendanceModel.countByStudent(studentId);
+        const data = await AttendanceModel.getByStudent(studentId, lopMonHocId, limit, offset);
+        const total = await AttendanceModel.countByStudent(studentId, lopMonHocId);
 
         return {
             data,
