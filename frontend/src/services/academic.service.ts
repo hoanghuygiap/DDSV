@@ -1,41 +1,39 @@
-import { Department, Major, AdminClass, Semester, Course, SubjectClass, ClassRegistration } from "../types/academic.type";
-import { mockDepartments, mockMajors, mockAdminClasses, mockSemesters, mockCourses, mockSubjectClasses, mockClassRegistrations } from "../mocks/academic.mock";
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import api from "@/api/axios"
+import type { Department, Major, AdminClass, Semester, Course, SubjectClass, ClassRegistration } from "../types/academic.type"
 
 export const AcademicService = {
   getDepartments: async (): Promise<Department[]> => {
-    await delay(300);
-    return mockDepartments;
+    const res = await api.get("/faculties")
+    return res.data.data ?? []
   },
 
   getMajors: async (): Promise<Major[]> => {
-    await delay(300);
-    return mockMajors;
+    const res = await api.get("/majors")
+    return res.data.data ?? []
   },
 
   getAdminClasses: async (): Promise<AdminClass[]> => {
-    await delay(300);
-    return mockAdminClasses;
+    const res = await api.get("/classes")
+    return res.data.data ?? []
   },
 
   getSemesters: async (): Promise<Semester[]> => {
-    await delay(300);
-    return mockSemesters;
+    const res = await api.get("/semesters")
+    return res.data.data ?? []
   },
 
   getCourses: async (): Promise<Course[]> => {
-    await delay(300);
-    return mockCourses;
+    const res = await api.get("/subjects")
+    return res.data.data ?? []
   },
 
-  getSubjectClasses: async (): Promise<SubjectClass[]> => {
-    await delay(300);
-    return mockSubjectClasses;
+  getSubjectClasses: async (params?: { page?: number; limit?: number; keyword?: string }): Promise<SubjectClass[]> => {
+    const res = await api.get("/course-classes", { params })
+    return res.data.data ?? []
   },
 
-  getClassRegistrations: async (): Promise<ClassRegistration[]> => {
-    await delay(300);
-    return mockClassRegistrations;
-  }
-};
+  getClassRegistrations: async (courseClassId: number): Promise<ClassRegistration[]> => {
+    const res = await api.get(`/course-classes/${courseClassId}/students`)
+    return res.data.data ?? []
+  },
+}
