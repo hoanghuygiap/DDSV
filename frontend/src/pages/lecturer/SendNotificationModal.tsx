@@ -51,7 +51,7 @@ export default function SendNotificationModal({ classId, classNameStr, onClose }
               <Bell size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-[#1a3a5f]">Gửi thông báo lớp</h2>
+              <h2 className="text-xl font-medium text-[#185FA5]">Gửi thông báo lớp</h2>
               <p className="text-sm font-medium text-slate-500">Lớp: {classNameStr}</p>
             </div>
           </div>
@@ -69,7 +69,7 @@ export default function SendNotificationModal({ classId, classNameStr, onClose }
               <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                 <Send size={32} />
               </div>
-              <h3 className="text-lg font-bold">Gửi thành công!</h3>
+              <h3 className="text-lg font-medium">Gửi thành công!</h3>
               <p className="text-sm text-slate-500 mt-2 text-center">Toàn bộ sinh viên trong lớp đã nhận được thông báo.</p>
             </div>
           ) : (
@@ -81,7 +81,7 @@ export default function SendNotificationModal({ classId, classNameStr, onClose }
               )}
               
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Tiêu đề thông báo <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -96,7 +96,7 @@ export default function SendNotificationModal({ classId, classNameStr, onClose }
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Nội dung chi tiết <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -122,7 +122,7 @@ export default function SendNotificationModal({ classId, classNameStr, onClose }
                 <button
                   type="submit"
                   disabled={sending || !title.trim() || !content.trim()}
-                  className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:shadow-none"
+                  className="px-5 py-2.5 bg-[#185FA5] text-white font-medium rounded-md hover:bg-[#1254a0] transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   {sending ? (
                     <>

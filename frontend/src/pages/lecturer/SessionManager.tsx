@@ -166,10 +166,10 @@ export default function SessionManager({ classId }: { classId: number }) {
     return (
         <div className="w-full">
             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-[#8b1a1a] text-lg">Quản lý các Buổi học</h3>
+                <h3 className="font-medium text-[#185FA5] text-lg">Quản lý các Buổi học</h3>
                 <button
                     onClick={handleOpenCreate}
-                    className="flex items-center gap-2 bg-[#8b1a1a] hover:bg-[#6e1414] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    className="flex items-center gap-2 bg-[#185FA5] hover:bg-[#1254a0] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                     <Plus size={16} /> Thêm buổi học
                 </button>
@@ -179,11 +179,11 @@ export default function SessionManager({ classId }: { classId: number }) {
                 <table className="w-full text-left text-sm">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs">
-                            <th className="py-3 px-4 font-bold">Ngày học</th>
-                            <th className="py-3 px-4 font-bold">Thời gian</th>
-                            <th className="py-3 px-4 font-bold">Phòng học</th>
-                            <th className="py-3 px-4 font-bold">Trạng thái</th>
-                            <th className="py-3 px-4 text-right font-bold">Thao tác</th>
+                            <th className="py-3 px-4 font-medium">Ngày học</th>
+                            <th className="py-3 px-4 font-medium">Thời gian</th>
+                            <th className="py-3 px-4 font-medium">Phòng học</th>
+                            <th className="py-3 px-4 font-medium">Trạng thái</th>
+                            <th className="py-3 px-4 text-right font-medium">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -216,11 +216,11 @@ export default function SessionManager({ classId }: { classId: number }) {
                                     </td>
                                     <td className="py-3 px-4">
                                         {s.trang_thai === 'huy' ? (
-                                            <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">Đã Hủy</span>
+                                            <span className="text-xs font-medium text-red-500 bg-red-50 px-2 py-1 rounded">Đã Hủy</span>
                                         ) : s.trang_thai === 'da_ket_thuc' ? (
-                                            <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">Đã kết thúc</span>
+                                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">Đã kết thúc</span>
                                         ) : (
-                                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Sắp diễn ra</span>
+                                            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Sắp diễn ra</span>
                                         )}
                                     </td>
                                     <td className="py-3 px-4">
@@ -261,7 +261,7 @@ export default function SessionManager({ classId }: { classId: number }) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                            <h2 className="text-lg font-bold text-[#1a3a5f]">
+                            <h2 className="text-lg font-medium text-[#185FA5]">
                                 {isEditing ? "Sửa thông tin buổi học" : "Tạo buổi học mới"}
                             </h2>
                         </div>
@@ -274,42 +274,42 @@ export default function SessionManager({ classId }: { classId: number }) {
                             )}
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1">Ngày học</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Ngày học</label>
                                 <input
                                     type="date"
                                     value={formData.ngay_hoc}
                                     onChange={e => setFormData({ ...formData, ngay_hoc: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] text-sm"
+                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#185FA5] text-sm"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Giờ bắt đầu</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Giờ bắt đầu</label>
                                     <input
                                         type="time"
                                         value={formData.gio_bat_dau}
                                         onChange={e => setFormData({ ...formData, gio_bat_dau: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] text-sm"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#185FA5] text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Giờ kết thúc</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Giờ kết thúc</label>
                                     <input
                                         type="time"
                                         value={formData.gio_ket_thuc}
                                         onChange={e => setFormData({ ...formData, gio_ket_thuc: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] text-sm"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#185FA5] text-sm"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1">Phòng học (Không bắt buộc)</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Phòng học (Không bắt buộc)</label>
                                 <select
                                     value={formData.phong_hoc_id}
                                     onChange={e => setFormData({ ...formData, phong_hoc_id: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] text-sm"
+                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-[#185FA5] text-sm"
                                 >
                                     <option value="">-- Chưa xếp phòng --</option>
                                     {rooms.map(r => (
@@ -329,7 +329,7 @@ export default function SessionManager({ classId }: { classId: number }) {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isSubmitting}
-                                className="px-4 py-2 flex items-center gap-2 font-medium text-white bg-[#8b1a1a] rounded-lg hover:bg-[#6e1414] transition-colors text-sm disabled:opacity-50"
+                                className="px-4 py-2 flex items-center gap-2 font-medium text-white bg-[#185FA5] rounded-lg hover:bg-[#1254a0] transition-colors text-sm disabled:opacity-50"
                             >
                                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
                                 Lưu thông tin

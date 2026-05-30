@@ -274,11 +274,11 @@ export default function LecturerSchedulePage() {
 
       {/* PAGE TITLE */}
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-full bg-[#8b1a1a] flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[#185FA5] flex items-center justify-center shrink-0">
           <ChevronRight size={18} className="text-white" />
         </div>
-        <h1 className="text-2xl font-extrabold text-[#8b1a1a] tracking-wide uppercase">
-          Thời Khóa Biểu
+        <h1 className="text-[22px] font-medium text-[#185FA5]">
+          Thời khóa biểu
         </h1>
       </div>
 
@@ -291,8 +291,8 @@ export default function LecturerSchedulePage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as "tuan" | "thu-tiet")}
-            className={`px-6 py-3 text-sm font-bold tracking-wide border-b-2 transition-colors ${activeTab === tab.key
-                ? "border-[#8b1a1a] text-[#8b1a1a]"
+            className={`px-6 py-3 text-sm font-medium tracking-wide border-b-2 transition-colors ${activeTab === tab.key
+                ? "border-[#185FA5] text-[#185FA5]"
                 : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
           >
@@ -313,7 +313,7 @@ export default function LecturerSchedulePage() {
               <select
                 value={selectedKy}
                 onChange={(e) => setSelectedKy(e.target.value)}
-                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] min-w-[180px]"
+                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]"
               >
                 <option value="">Tất cả học kỳ</option>
                 {semesters.map((ky) => (
@@ -335,7 +335,7 @@ export default function LecturerSchedulePage() {
               <button
                 onClick={gotoFirstWeek}
                 title="Tuần đầu tiên"
-                className="w-9 h-9 flex items-center justify-center border border-[#8b1a1a] bg-[#8b1a1a] text-white rounded hover:bg-[#6e1414] transition-colors"
+                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
               >
                 <ChevronsLeft size={16} />
               </button>
@@ -348,7 +348,7 @@ export default function LecturerSchedulePage() {
               </button>
               <button
                 onClick={() => setCurrentWeekStart(getMonday(new Date()))}
-                className="h-9 px-4 border border-[#8b1a1a] bg-[#8b1a1a] text-white text-sm font-bold rounded hover:bg-[#6e1414] transition-colors"
+                className="h-9 px-4 border border-[#185FA5] bg-[#185FA5] text-white text-sm font-medium rounded hover:bg-[#1254a0] transition-colors"
               >
                 Hiện tại
               </button>
@@ -362,7 +362,7 @@ export default function LecturerSchedulePage() {
               <button
                 onClick={gotoLastWeek}
                 title="Tuần cuối cùng"
-                className="w-9 h-9 flex items-center justify-center border border-[#8b1a1a] bg-[#8b1a1a] text-white rounded hover:bg-[#6e1414] transition-colors"
+                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
               >
                 <ChevronsRight size={16} />
               </button>
@@ -373,15 +373,15 @@ export default function LecturerSchedulePage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
               <thead>
-                <tr className="bg-[#8b1a1a] text-white">
-                  <th className="border border-[#6e1414] px-2 py-3 text-center font-bold text-xs" style={{ minWidth: 68 }}>
+                <tr className="bg-[#185FA5] text-white">
+                  <th className="border border-[#1254a0] px-2 py-3 text-center font-medium text-xs" style={{ minWidth: 68 }}>
                     <div>Tiết</div>
-                    <div className="font-normal text-[10px] text-red-200 mt-0.5">Giờ học</div>
+                    <div className="font-normal text-[10px] text-blue-200 mt-0.5">Giờ học</div>
                   </th>
                   {weekDays.map((day, i) => (
-                    <th key={i} className="border border-[#6e1414] px-2 py-3 text-center font-bold text-xs">
+                    <th key={i} className="border border-[#1254a0] px-2 py-3 text-center font-medium text-xs">
                       <div>{DAY_NAMES[i]}</div>
-                      <div className="font-normal text-[11px] text-red-200 mt-0.5">{fmtDate(day)}</div>
+                      <div className="font-normal text-[11px] text-blue-200 mt-0.5">{fmtDate(day)}</div>
                     </th>
                   ))}
                 </tr>
@@ -389,8 +389,8 @@ export default function LecturerSchedulePage() {
               <tbody>
                 {TIET_INFO.map(({ tiet, label }) => (
                   <tr key={tiet}>
-                    <td className="border border-slate-200 text-center bg-[#fdf5f5] py-2 px-1" style={{ minWidth: 68 }}>
-                      <div className="font-extrabold text-[#8b1a1a] text-sm leading-none">{tiet}</div>
+                    <td className="border border-slate-200 text-center bg-blue-50 py-2 px-1" style={{ minWidth: 68 }}>
+                      <div className="font-medium text-[#185FA5] text-sm leading-none">{tiet}</div>
                       <div className="text-[10px] text-slate-500 mt-1 whitespace-nowrap">{label}</div>
                     </td>
                     {Array.from({ length: 7 }, (_, dayIdx) => {
@@ -405,12 +405,12 @@ export default function LecturerSchedulePage() {
                         <td
                           key={dayIdx}
                           rowSpan={rowspan}
-                          className="border border-[#c8736f] align-top p-0"
+                          className="border border-[#185FA5]/30 align-top p-0"
                           style={{ verticalAlign: "top" }}
                         >
-                          <div className="h-full bg-[#fdf0ef] border-l-4 border-[#8b1a1a] p-2 text-[11px] leading-relaxed">
-                            <div className="font-extrabold text-slate-800 mb-0.5 truncate">{session.ten_phong || "—"}</div>
-                            <div className="font-bold text-[#8b1a1a] leading-tight mb-1">
+                          <div className="h-full bg-blue-50 border-l-4 border-[#185FA5] p-2 text-[11px] leading-relaxed">
+                            <div className="font-medium text-slate-800 mb-0.5 truncate">{session.ten_phong || "—"}</div>
+                            <div className="font-medium text-[#185FA5] leading-tight mb-1">
                               {session.ten_hoc_phan}
                               {session.ma_hoc_phan && session.ma_hoc_phan !== "—" && (
                                 <span className="font-normal text-[10px] text-slate-500"> ({session.ma_hoc_phan})</span>
@@ -420,7 +420,7 @@ export default function LecturerSchedulePage() {
                             <div className="text-slate-500">Tiết: {startTiet}–{endTiet} ({soTiet} tiết)</div>
                             <div className="text-slate-500">Bắt đầu: {fmtTime(session.gio_bat_dau)}</div>
                             {lecturer && (
-                              <div className="text-[#8b1a1a] font-medium mt-0.5 truncate">GV: {lecturer.ho_ten}</div>
+                              <div className="text-[#185FA5] font-medium mt-0.5 truncate">GV: {lecturer.ho_ten}</div>
                             )}
                           </div>
                         </td>
@@ -452,7 +452,7 @@ export default function LecturerSchedulePage() {
               <select
                 value={selectedKy}
                 onChange={(e) => setSelectedKy(e.target.value)}
-                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#8b1a1a] min-w-[180px]"
+                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]"
               >
                 <option value="">Tất cả học kỳ</option>
                 {semesters.map((ky) => (
@@ -463,7 +463,7 @@ export default function LecturerSchedulePage() {
           </div>
 
           {selectedKy && (
-            <div className="text-xs font-bold text-[#8b1a1a] mb-3 uppercase">
+            <div className="text-xs font-medium text-[#185FA5] mb-3 uppercase">
               Học kỳ: {selectedKy}
             </div>
           )}
@@ -471,9 +471,9 @@ export default function LecturerSchedulePage() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs" style={{ minWidth: 900 }}>
               <thead>
-                <tr className="bg-[#8b1a1a] text-white">
+                <tr className="bg-[#185FA5] text-white">
                   {["STT", "Mã lớp học phần/Tên lớp học phần", "Số TC", "Mã lớp SV", "Thứ", "Tiết(giờ) bắt đầu", "Phòng học", "Tuần", "Cơ sở", "Địa chỉ"].map((h) => (
-                    <th key={h} className="border border-[#6e1414] px-3 py-3 text-left font-bold whitespace-nowrap">
+                    <th key={h} className="border border-[#1254a0] px-3 py-3 text-left font-medium whitespace-nowrap">
                       {h}
                     </th>
                   ))}
@@ -502,11 +502,11 @@ export default function LecturerSchedulePage() {
                         <tr key={`${item.lmhId}-${slotIdx}`} className="hover:bg-slate-50 border-b border-slate-100">
                           {slotIdx === 0 && (
                             <>
-                              <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-bold text-slate-700 align-middle">
+                              <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-medium text-slate-700 align-middle">
                                 {sttIdx + 1}
                               </td>
                               <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 align-top">
-                                <div className="font-bold text-slate-600">
+                                <div className="font-medium text-slate-600">
                                   {item.ma_lop}-{item.ten_hoc_phan}
                                   {lecturer && (
                                     <span className="font-normal">-{lecturer.ho_ten}</span>
@@ -516,7 +516,7 @@ export default function LecturerSchedulePage() {
                                   <div className="text-slate-400">(Email: {lecturer.email})</div>
                                 )}
                               </td>
-                              <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-bold text-slate-700 align-middle">
+                              <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-medium text-slate-700 align-middle">
                                 {item.so_tin_chi}
                               </td>
                             </>
@@ -524,7 +524,7 @@ export default function LecturerSchedulePage() {
                           <td className="border border-slate-200 px-3 py-2 text-slate-600">{/* mã lớp sv */}</td>
                           <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700">{dayName}</td>
                           <td className="border border-slate-200 px-3 py-2 text-slate-600">{gioHien}</td>
-                          <td className="border border-slate-200 px-3 py-2 font-bold text-slate-700">{slot.phong || "—"}</td>
+                          <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700">{slot.phong || "—"}</td>
                           <td className="border border-slate-200 px-3 py-2 text-slate-500 whitespace-nowrap">{tuanRange}</td>
                           <td className="border border-slate-200 px-3 py-2 text-slate-500">Cơ sở chính</td>
                           <td className="border border-slate-200 px-3 py-2 text-slate-500">Đường Nghiêm Xuân Yêm, Đại học Thăng Long</td>
