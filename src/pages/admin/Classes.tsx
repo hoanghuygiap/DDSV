@@ -82,7 +82,7 @@ export default function ClassesPage() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1e325c]">Quản lý Lớp môn học</h1>
+          <h1 className="text-[22px] font-medium text-[#185FA5]">Quản lý Lớp môn học</h1>
           <p className="text-sm text-slate-500 mt-1">Danh sách các lớp học theo học phần và học kỳ.</p>
         </div>
         <div className="relative w-full md:w-72">
@@ -91,48 +91,39 @@ export default function ClassesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-md text-sm bg-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#007082] shadow-sm"
+            className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-md text-sm bg-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#185FA5] focus:border-[#185FA5] shadow-sm"
             placeholder="Lọc mã lớp, môn học, giảng viên..."
           />
         </div>
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div className="bg-[#1e325c] rounded-xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden min-h-[130px]">
+      <div className="mb-6">
+        <div className="bg-[#185FA5] rounded-lg p-5 shadow-sm flex flex-col justify-between relative overflow-hidden min-h-[120px] max-w-xs">
           <div className="flex justify-between items-start">
-            <h3 className="text-[#8ba3cc] font-bold text-xs uppercase tracking-wider">Tổng số lớp môn học</h3>
-            <Book size={20} className="text-[#8ba3cc]" />
+            <h3 className="text-blue-200 font-medium text-xs uppercase tracking-wider">Tổng số lớp môn học</h3>
+            <Book size={20} className="text-blue-200" />
           </div>
-          <h2 className="text-white text-4xl font-bold mt-6">{pagination.total.toLocaleString()}</h2>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[130px]">
-          <div className="flex justify-between items-start">
-            <h3 className="text-slate-500 font-bold text-xs uppercase tracking-wider">Trang hiện tại</h3>
-            <Users size={20} className="text-[#007082]" />
-          </div>
-          <h2 className="text-slate-800 text-4xl font-bold mt-6">
-            {page} / {pagination.totalPages}
-          </h2>
+          <h2 className="text-white text-4xl font-medium mt-4">{pagination.total.toLocaleString()}</h2>
         </div>
       </div>
 
       {/* TABLE */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col overflow-hidden">
         {error && (
           <div className="p-4 bg-red-50 border-b border-red-100 text-sm text-red-600">{error}</div>
         )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600">
-            <thead className="text-[11px] uppercase text-slate-500 bg-slate-100/80 border-b border-slate-200">
+            <thead className="text-xs uppercase text-slate-500 bg-slate-100/80 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 font-bold tracking-wider">Môn học</th>
-                <th className="px-6 py-4 font-bold tracking-wider">Mã lớp</th>
-                <th className="px-6 py-4 font-bold tracking-wider">Giảng viên</th>
-                <th className="px-6 py-4 font-bold tracking-wider text-center">Mã GV</th>
-                <th className="px-6 py-4 font-bold tracking-wider text-center">Số SV</th>
-                <th className="px-6 py-4 font-bold tracking-wider">Học kỳ</th>
+                <th className="px-6 py-4 font-medium tracking-wider">Môn học</th>
+                <th className="px-6 py-4 font-medium tracking-wider">Mã lớp</th>
+                <th className="px-6 py-4 font-medium tracking-wider">Giảng viên</th>
+                <th className="px-6 py-4 font-medium tracking-wider text-center">Mã GV</th>
+                <th className="px-6 py-4 font-medium tracking-wider text-center">Số SV</th>
+                <th className="px-6 py-4 font-medium tracking-wider">Học kỳ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -155,11 +146,11 @@ export default function ClassesPage() {
                 filtered.map((cls) => (
                   <tr key={cls.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-[#1e325c]">{cls.ten_hoc_phan || "—"}</p>
+                      <p className="font-medium text-[#185FA5]">{cls.ten_hoc_phan || "—"}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{cls.ma_hoc_phan || "—"}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-mono text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                      <span className="font-mono text-sm font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
                         {cls.ma_lop}
                       </span>
                     </td>
@@ -168,18 +159,18 @@ export default function ClassesPage() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       {cls.ma_giang_vien
-                        ? <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{cls.ma_giang_vien}</span>
+                        ? <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">{cls.ma_giang_vien}</span>
                         : <span className="text-slate-300">—</span>}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 font-bold text-[#1e325c]">
+                      <span className="inline-flex items-center gap-1 font-medium text-[#185FA5]">
                         <Users size={14} className="text-slate-400" />
                         {cls.so_sinh_vien}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       {cls.ten_ky ? (
-                        <span className="inline-flex px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-xs font-bold">
+                        <span className="inline-flex px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-xs font-medium">
                           {cls.ten_ky}
                         </span>
                       ) : (
@@ -197,10 +188,10 @@ export default function ClassesPage() {
         <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-sm text-slate-500">
             Hiển thị{" "}
-            <span className="font-bold text-slate-700">
+            <span className="font-medium text-slate-700">
               {classes.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0}–{(page - 1) * PAGE_SIZE + classes.length}
             </span>{" "}
-            trong <span className="font-bold text-slate-700">{pagination.total.toLocaleString()}</span> lớp
+            trong <span className="font-medium text-slate-700">{pagination.total.toLocaleString()}</span> lớp
           </span>
           {pagination.totalPages > 1 && (
             <div className="flex items-center gap-1">
@@ -213,8 +204,8 @@ export default function ClassesPage() {
                   <span key={`e${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
                 ) : (
                   <button key={p} onClick={() => goToPage(p as number)}
-                    className={`w-9 h-9 flex items-center justify-center rounded text-sm font-bold transition-colors ${
-                      p === page ? "bg-[#1e325c] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
+                      p === page ? "bg-[#185FA5] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
                     }`}>
                     {p}
                   </button>
