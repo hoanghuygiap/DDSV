@@ -72,9 +72,9 @@ export default function StudentHistoryModal({ student, classId, onClose, onUpdat
                 {/* HEADER */}
                 <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
                     <div>
-                        <h2 className="text-xl font-bold text-[#1a3a5f]">Hồ sơ điểm danh</h2>
+                        <h2 className="text-xl font-medium text-[#185FA5]">Hồ sơ điểm danh</h2>
                         <p className="text-sm font-medium text-slate-500 mt-1">
-                            SV: <span className="font-bold text-[#8b1a1a]">{student.ho_ten}</span> ({student.ma_sinh_vien})
+                            SV: <span className="font-medium text-[#185FA5]">{student.ho_ten}</span> ({student.ma_sinh_vien})
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors">
@@ -100,11 +100,11 @@ export default function StudentHistoryModal({ student, classId, onClose, onUpdat
                     <table className="w-full text-left text-sm whitespace-nowrap">
                         <thead className="bg-slate-50 sticky top-0 shadow-sm z-10">
                             <tr>
-                                <th className="py-3 px-4 font-bold text-slate-500">Ngày học</th>
-                                <th className="py-3 px-4 font-bold text-slate-500">Giờ học</th>
-                                <th className="py-3 px-4 font-bold text-slate-500">Trạng thái</th>
-                                <th className="py-3 px-4 font-bold text-slate-500">Ghi chú</th>
-                                <th className="py-3 px-4 font-bold text-slate-500 text-right">Thao tác</th>
+                                <th className="py-3 px-4 font-medium text-slate-500">Ngày học</th>
+                                <th className="py-3 px-4 font-medium text-slate-500">Giờ học</th>
+                                <th className="py-3 px-4 font-medium text-slate-500">Trạng thái</th>
+                                <th className="py-3 px-4 font-medium text-slate-500">Ghi chú</th>
+                                <th className="py-3 px-4 font-medium text-slate-500 text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -145,10 +145,10 @@ export default function StudentHistoryModal({ student, classId, onClose, onUpdat
                                                     <option value="co_phep">Có phép</option>
                                                 </select>
                                             ) : (
-                                                <span className={`px-2.5 py-1 rounded text-xs font-bold ${h.trang_thai === 'co_mat' ? 'bg-emerald-100 text-emerald-700' :
-                                                    h.trang_thai === 'vang' ? 'bg-red-100 text-red-700' :
-                                                        h.trang_thai === 'tre' ? 'bg-amber-100 text-amber-700' :
-                                                            'bg-blue-100 text-blue-700'
+                                                <span className={`px-2.5 py-1 rounded text-xs font-medium ${h.trang_thai === 'co_mat' ? 'bg-[#dcfce7] text-[#15803d]' :
+                                                    h.trang_thai === 'vang' ? 'bg-[#fee2e2] text-[#dc2626]' :
+                                                        h.trang_thai === 'tre' ? 'bg-[#fff7ed] text-[#ea580c]' :
+                                                            'bg-[#e0f2fe] text-[#0284c7]'
                                                     }`}>
                                                     {h.trang_thai === 'co_mat' ? 'CÓ MẶT' :
                                                         h.trang_thai === 'vang' ? 'VẮNG' :

@@ -50,15 +50,15 @@ const PAGE_SIZE = 15
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function riskBadge(tyLeVang: number | null) {
   const val = tyLeVang ?? 0
-  if (val >= 20) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-red-50 text-red-600 border border-red-200">⚠ Cấm thi</span>
-  if (val >= 10) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-orange-50 text-orange-600 border border-orange-200">Cảnh báo</span>
-  return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Bình thường</span>
+  if (val >= 20) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-600 border border-red-200">⚠ Cấm thi</span>
+  if (val >= 10) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-orange-50 text-orange-600 border border-orange-200">Cảnh báo</span>
+  return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Bình thường</span>
 }
 
 function vangColor(v: number | null) {
   const val = v ?? 0
-  if (val >= 20) return "text-red-600 font-bold"
-  if (val >= 10) return "text-orange-500 font-bold"
+  if (val >= 20) return "text-red-600 font-medium"
+  if (val >= 10) return "text-orange-500 font-medium"
   return "text-slate-700"
 }
 
@@ -103,8 +103,8 @@ function PaginationBar({ pag, onChange }: { pag: Pagination; onChange: (p: numbe
             <button
               key={p}
               onClick={() => onChange(p as number)}
-              className={`w-8 h-8 rounded border text-xs font-semibold transition-colors ${p === page
-                ? "border-[#8b1a1a] bg-[#8b1a1a] text-white"
+              className={`w-8 h-8 rounded border text-xs font-medium transition-colors ${p === page
+                ? "border-[#185FA5] bg-[#185FA5] text-white"
                 : "border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
             >
@@ -260,7 +260,7 @@ export default function ClassDetail() {
 
       {/* BREADCRUMB */}
       <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-        <Link to="/dashboard/my-classes" className="hover:text-[#8b1a1a] flex items-center gap-1 transition-colors">
+        <Link to="/dashboard/my-classes" className="hover:text-[#185FA5] flex items-center gap-1 transition-colors">
           <ArrowLeft size={15} />
           Quay lại
         </Link>
@@ -273,11 +273,11 @@ export default function ClassDetail() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h1 className="text-xl font-extrabold text-[#8b1a1a] tracking-tight">{summary.ten_hoc_phan}</h1>
-              <span className="bg-[#fdf0ef] text-[#8b1a1a] px-2.5 py-0.5 rounded text-xs font-bold border border-[#e8b5b3]">
+              <h1 className="text-xl font-medium text-[#185FA5] tracking-tight">{summary.ten_hoc_phan}</h1>
+              <span className="bg-blue-50 text-[#185FA5] px-2.5 py-0.5 rounded text-xs font-medium border border-blue-100">
                 {summary.ma_lop}
               </span>
-              <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-xs font-bold">
+              <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded text-xs font-medium">
                 {summary.ma_hoc_phan}
               </span>
             </div>
@@ -287,7 +287,7 @@ export default function ClassDetail() {
           </div>
           <button
             onClick={() => setShowNotificationModal(true)}
-            className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-semibold px-4 py-2 rounded-lg transition-colors border border-blue-200 shadow-sm self-start mt-2 md:mt-0"
+            className="flex items-center gap-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-medium px-4 py-2 rounded-lg transition-colors border border-blue-200 shadow-sm self-start mt-2 md:mt-0"
           >
             <Bell size={18} /> Gửi thông báo
           </button>
@@ -318,17 +318,17 @@ export default function ClassDetail() {
       <div className="flex items-center gap-6 border-b border-slate-200 mt-2">
         <button
           onClick={() => setActiveTab("SESSIONS")}
-          className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === "SESSIONS" ? "text-[#8b1a1a]" : "text-slate-500 hover:text-slate-700"}`}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === "SESSIONS" ? "text-[#185FA5]" : "text-slate-500 hover:text-slate-700"}`}
         >
           Quản lý buổi học
-          {activeTab === "SESSIONS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8b1a1a] rounded-t-lg" />}
+          {activeTab === "SESSIONS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#185FA5] rounded-t-lg" />}
         </button>
         <button
           onClick={() => setActiveTab("STUDENTS")}
-          className={`pb-3 text-sm font-semibold transition-colors relative ${activeTab === "STUDENTS" ? "text-[#8b1a1a]" : "text-slate-500 hover:text-slate-700"}`}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === "STUDENTS" ? "text-[#185FA5]" : "text-slate-500 hover:text-slate-700"}`}
         >
           Danh sách sinh viên
-          {activeTab === "STUDENTS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8b1a1a] rounded-t-lg" />}
+          {activeTab === "STUDENTS" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#185FA5] rounded-t-lg" />}
         </button>
       </div>
 
@@ -344,9 +344,9 @@ export default function ClassDetail() {
             {/* Toolbar */}
             <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-[#8b1a1a] text-base">Danh sách chuyên cần</h3>
+                <h3 className="font-medium text-[#185FA5] text-base">Danh sách chuyên cần</h3>
                 {pag && (
-                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium">
                     {pag.total}
                   </span>
                 )}
@@ -364,7 +364,7 @@ export default function ClassDetail() {
                   <button
                     type="submit"
                     disabled={addingSv || !addSvCode.trim()}
-                    className="bg-emerald-600 text-white text-sm font-semibold px-3 py-1.5 rounded hover:bg-emerald-700 disabled:opacity-60 transition"
+                    className="bg-emerald-600 text-white text-sm font-medium px-3 py-1.5 rounded hover:bg-emerald-700 disabled:opacity-60 transition"
                   >
                     {addingSv ? "..." : "+ Thêm"}
                   </button>
@@ -377,7 +377,7 @@ export default function ClassDetail() {
                     value={inputVal}
                     onChange={e => handleSearch(e.target.value)}
                     placeholder="Tìm MSSV, họ tên..."
-                    className="pl-8 pr-4 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:border-[#8b1a1a] focus:ring-1 focus:ring-[#8b1a1a] w-56"
+                    className="pl-8 pr-4 py-1.5 border border-slate-200 rounded text-sm focus:outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#185FA5] w-56"
                   />
                 </div>
               </div>
@@ -387,9 +387,9 @@ export default function ClassDetail() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#8b1a1a] text-white text-xs">
+                  <tr className="bg-[#185FA5] text-white text-xs">
                     {["STT", "MSSV", "Họ và tên", "Tổng buổi", "Vắng", "Trễ", "Phép", "Có mặt", "Tỷ lệ vắng", "Trạng thái", "Thao tác"].map(h => (
-                      <th key={h} className="py-3 px-4 font-bold whitespace-nowrap border-r border-[#6e1414] last:border-r-0">
+                      <th key={h} className="py-3 px-4 font-medium whitespace-nowrap border-r border-[#1254a0] last:border-r-0">
                         {h}
                       </th>
                     ))}
@@ -414,10 +414,10 @@ export default function ClassDetail() {
                       const vang = Number(sv.so_buoi_vang ?? 0)
                       const rate = Number(sv.ty_le_vang ?? 0)
                       return (
-                        <tr key={sv.id} className={`hover:bg-[#fdf8f8] transition-colors ${rate >= 20 ? "bg-red-50/40" : ""}`}>
+                        <tr key={sv.id} className={`hover:bg-slate-50 transition-colors ${rate >= 20 ? "bg-red-50/40" : ""}`}>
                           <td className="py-3 px-4 text-slate-500 text-center font-medium">{stt}</td>
-                          <td className="py-3 px-4 font-mono font-bold text-slate-700 text-xs">{sv.ma_sinh_vien}</td>
-                          <td className="py-3 px-4 font-semibold text-slate-800">{sv.ho_ten}</td>
+                          <td className="py-3 px-4 font-mono font-medium text-slate-700 text-xs">{sv.ma_sinh_vien}</td>
+                          <td className="py-3 px-4 font-medium text-slate-800">{sv.ho_ten}</td>
                           <td className="py-3 px-4 text-center text-slate-600">{sv.tong_buoi}</td>
                           <td className="py-3 px-4 text-center">
                             <span className={vangColor(sv.ty_le_vang)}>{vang}</span>
@@ -433,14 +433,14 @@ export default function ClassDetail() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => setSelectedStudent(sv)}
-                                className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                                className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center gap-1"
                                 title="Xem LS Chuyên cần & Sửa"
                               >
                                 Chi tiết
                               </button>
                               <button
                                 onClick={() => handleRemoveStudent(sv)}
-                                className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-red-100 hover:bg-red-100 transition-colors"
+                                className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-100 hover:bg-red-100 transition-colors"
                                 title="Xoá sinh viên khỏi lớp"
                               >
                                 Xoá
@@ -515,7 +515,7 @@ export default function ClassDetail() {
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 const COLOR_MAP = {
-  blue: { wrap: "bg-blue-50 text-blue-600", text: "text-[#1a3a5f]" },
+  blue: { wrap: "bg-blue-50 text-blue-600", text: "text-[#185FA5]" },
   emerald: { wrap: "bg-emerald-50 text-emerald-600", text: "text-emerald-700" },
   red: { wrap: "bg-red-50 text-red-500", text: "text-red-600" },
   indigo: { wrap: "bg-indigo-50 text-indigo-600", text: "text-indigo-700" },
@@ -536,8 +536,8 @@ function StatCard({
         {icon}
       </div>
       <div>
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide leading-tight">{label}</p>
-        <p className={`text-lg font-extrabold mt-0.5 ${c.text}`}>{value}</p>
+        <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide leading-tight">{label}</p>
+        <p className={`text-lg font-medium mt-0.5 ${c.text}`}>{value}</p>
       </div>
     </div>
   )

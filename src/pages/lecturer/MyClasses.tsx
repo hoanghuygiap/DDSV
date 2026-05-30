@@ -151,10 +151,10 @@ export default function MyClasses() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1a3a5f] tracking-tight">
+          <h1 className="text-[22px] font-medium text-slate-800">
             Danh sách Lớp học
           </h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Quản lý các lớp học phần bạn đang phụ trách
           </p>
         </div>
@@ -167,13 +167,13 @@ export default function MyClasses() {
               placeholder="Tìm mã lớp, tên môn..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#00a8cc] focus:ring-1 focus:ring-[#00a8cc] w-full md:w-64"
+              className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#185FA5] w-full md:w-64"
             />
           </div>
           <select
             value={selectedKy}
             onChange={(e) => setSelectedKy(e.target.value)}
-            className="border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:border-[#00a8cc] focus:ring-1 focus:ring-[#00a8cc]"
+            className="border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:border-[#185FA5] focus:ring-1 focus:ring-[#185FA5]"
           >
             <option value="">Tất cả học kỳ</option>
             {semesters.map(ky => (
@@ -195,10 +195,10 @@ export default function MyClasses() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Mã Lớp / Học phần</th>
-                  <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Học kỳ</th>
-                  <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Thời gian</th>
-                  <th className="py-4 px-6 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
+                  <th className="py-4 px-6 text-xs font-medium text-slate-500 uppercase tracking-wider">Mã Lớp / Học phần</th>
+                  <th className="py-4 px-6 text-xs font-medium text-slate-500 uppercase tracking-wider">Học kỳ</th>
+                  <th className="py-4 px-6 text-xs font-medium text-slate-500 uppercase tracking-wider">Thời gian</th>
+                  <th className="py-4 px-6 text-xs font-medium text-slate-500 uppercase tracking-wider text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -210,18 +210,18 @@ export default function MyClasses() {
                           <BookOpen size={20} />
                         </div>
                         <div>
-                          <Link to={`/dashboard/my-classes/${cls.id}`} className="font-bold text-[#1a3a5f] hover:text-[#00a8cc] transition-colors">
+                          <Link to={`/dashboard/my-classes/${cls.id}`} className="font-medium text-[#185FA5] hover:underline transition-colors">
                             {cls.ten_hoc_phan}
                           </Link>
-                          <p className="text-sm text-slate-500 font-medium">{cls.ma_lop} • {cls.so_tin_chi} TC</p>
+                          <p className="text-sm text-slate-500">{cls.ma_lop} • {cls.so_tin_chi} TC</p>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm font-semibold text-slate-700">{cls.ten_ky}</span>
+                      <span className="text-sm font-medium text-slate-700">{cls.ten_ky}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex flex-col gap-1 text-sm text-slate-700 font-medium">
+                      <div className="flex flex-col gap-1 text-sm text-slate-700">
                         <span>{getScheduleSummary(cls.id)}</span>
                         <div className="flex items-center gap-1 text-xs text-slate-500 font-normal">
                           <MapPin size={12} />
@@ -231,7 +231,7 @@ export default function MyClasses() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link to={`/dashboard/my-classes/${cls.id}`} className="p-2 text-slate-400 hover:text-[#00a8cc] hover:bg-blue-50 rounded-lg transition-colors tooltip-trigger" title="Xem chi tiết">
+                        <Link to={`/dashboard/my-classes/${cls.id}`} className="p-2 text-slate-400 hover:text-[#185FA5] hover:bg-blue-50 rounded-lg transition-colors" title="Xem chi tiết">
                           <ExternalLink size={18} />
                         </Link>
                       </div>
@@ -265,7 +265,7 @@ export default function MyClasses() {
                       key={page}
                       onClick={() => setCurrentPage(page)}
                       className={`px-3 py-1 border rounded transition-colors ${currentPage === page
-                        ? "border-[#00a8cc] bg-[#00a8cc] text-white font-medium"
+                        ? "border-[#185FA5] bg-[#185FA5] text-white font-medium"
                         : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                         }`}
                     >
