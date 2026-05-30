@@ -328,13 +328,16 @@ class StudentModel {
                 lmh.id AS lop_mon_hoc_id,
                 lmh.ma_lop,
                 hp.ten_hoc_phan,
-                gv.ho_ten AS ten_giang_vien
+                gv.ho_ten AS ten_giang_vien,
+                ky.bat_dau,
+                ky.ket_thuc
             FROM dang_ky_lop dk
             JOIN thoi_khoa_bieu tkb ON dk.lop_mon_hoc_id = tkb.lop_mon_hoc_id
             JOIN lop_mon_hoc lmh ON tkb.lop_mon_hoc_id = lmh.id
             LEFT JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
             LEFT JOIN giang_vien gv ON lmh.giang_vien_id = gv.id
             LEFT JOIN phong_hoc ph ON tkb.phong_hoc_id = ph.id
+            LEFT JOIN ky_hoc ky ON lmh.ky_hoc_id = ky.id
             WHERE dk.sinh_vien_id = ?
             AND lmh.deleted_at IS NULL
             ORDER BY tkb.thu ASC, tkb.gio_bat_dau ASC
@@ -422,7 +425,20 @@ class StudentModel {
                 tk.tre,
                 tk.co_phep,
                 tk.ti_le_co_mat
-            FROM v_thong_ke tk
+            FROM (
+                SELECT 
+                    d.sinh_vien_id, 
+                    b.lop_mon_hoc_id,
+                    COUNT(b.id) AS tong,
+                    SUM(CASE WHEN d.trang_thai = 'co_mat' THEN 1 ELSE 0 END) AS co_mat,
+                    SUM(CASE WHEN d.trang_thai = 'vang' THEN 1 ELSE 0 END) AS vang,
+                    SUM(CASE WHEN d.trang_thai = 'tre' THEN 1 ELSE 0 END) AS tre,
+                    SUM(CASE WHEN d.trang_thai = 'co_phep' THEN 1 ELSE 0 END) AS co_phep,
+                    ROUND(SUM(CASE WHEN d.trang_thai = 'co_mat' THEN 1 ELSE 0 END) / NULLIF(COUNT(b.id), 0) * 100, 2) AS ti_le_co_mat
+                FROM diem_danh d
+                JOIN buoi_hoc b ON d.buoi_hoc_id = b.id
+                GROUP BY d.sinh_vien_id, b.lop_mon_hoc_id
+            ) tk
             JOIN lop_mon_hoc lmh ON tk.lop_mon_hoc_id = lmh.id
             LEFT JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
             WHERE tk.sinh_vien_id = ?
@@ -443,7 +459,24 @@ class StudentModel {
                 cct.co_mat,
                 cct.vang,
                 cct.ti_le_co_mat
-            FROM v_chuyen_can_theo_tuan cct
+            FROM (
+                SELECT 
+                    d.sinh_vien_id,
+                    b.lop_mon_hoc_id,
+                    YEARWEEK(b.ngay_hoc, 1) AS tuan_hoc,
+                    STR_TO_DATE(CONCAT(YEARWEEK(b.ngay_hoc, 1), ' Monday'), '%X%V %W') AS ngay_dau_tuan,
+                    COUNT(b.id) AS tong_buoi,
+                    SUM(CASE WHEN d.trang_thai = 'co_mat' THEN 1 ELSE 0 END) AS co_mat,
+                    SUM(CASE WHEN d.trang_thai = 'vang' THEN 1 ELSE 0 END) AS vang,
+                    ROUND(SUM(CASE WHEN d.trang_thai = 'co_mat' THEN 1 ELSE 0 END) / NULLIF(COUNT(b.id), 0) * 100, 2) AS ti_le_co_mat
+                FROM diem_danh d
+                JOIN buoi_hoc b ON d.buoi_hoc_id = b.id
+                GROUP BY 
+                    d.sinh_vien_id, 
+                    b.lop_mon_hoc_id, 
+                    YEARWEEK(b.ngay_hoc, 1),
+                    STR_TO_DATE(CONCAT(YEARWEEK(b.ngay_hoc, 1), ' Monday'), '%X%V %W')
+            ) cct
             JOIN lop_mon_hoc lmh ON cct.lop_mon_hoc_id = lmh.id
             LEFT JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
             WHERE cct.sinh_vien_id = ?
