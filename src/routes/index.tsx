@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
+import { RoleGuard } from "@/components/RoleGuard"
 import LoginPage from "@/pages/auth/Login"
 import RegisterPage from "@/pages/auth/Register"
 import ForgotPasswordPage from "@/pages/auth/ForgotPassword"
@@ -43,50 +44,56 @@ export const router = createBrowserRouter([
         index: true,
         element: <DashboardHome />,
       },
+
+      // ── Admin only ─────────────────────────────────────────────
       {
         path: "students",
-        element: <StudentsPage />,
+        element: <RoleGuard allowed={["admin"]}><StudentsPage /></RoleGuard>,
       },
       {
         path: "students/:id",
-        element: <StudentDetailPage />,
+        element: <RoleGuard allowed={["admin"]}><StudentDetailPage /></RoleGuard>,
       },
       {
         path: "lecturers",
-        element: <LecturersPage />,
+        element: <RoleGuard allowed={["admin"]}><LecturersPage /></RoleGuard>,
       },
       {
         path: "lecturers/:id",
-        element: <LecturerDetailPage />,
+        element: <RoleGuard allowed={["admin"]}><LecturerDetailPage /></RoleGuard>,
       },
       {
         path: "classes",
-        element: <ClassesPage />,
+        element: <RoleGuard allowed={["admin"]}><ClassesPage /></RoleGuard>,
       },
       {
         path: "schedule",
-        element: <SchedulePage />,
-      },
-      {
-        path: "lecturer-schedule",
-        element: <LecturerSchedulePage />,
-      },
-      {
-        path: "my-classes",
-        element: <MyClassesPage />,
-      },
-      {
-        path: "my-classes/:id",
-        element: <ClassDetailPage />,
-      },
-      {
-        path: "qr-attendance",
-        element: <LiveAttendanceQRPage />,
+        element: <RoleGuard allowed={["admin"]}><SchedulePage /></RoleGuard>,
       },
       {
         path: "reports",
-        element: <ReportsPage />,
+        element: <RoleGuard allowed={["admin"]}><ReportsPage /></RoleGuard>,
       },
+
+      // ── Lecturer only ──────────────────────────────────────────
+      {
+        path: "lecturer-schedule",
+        element: <RoleGuard allowed={["lecturer"]}><LecturerSchedulePage /></RoleGuard>,
+      },
+      {
+        path: "my-classes",
+        element: <RoleGuard allowed={["lecturer"]}><MyClassesPage /></RoleGuard>,
+      },
+      {
+        path: "my-classes/:id",
+        element: <RoleGuard allowed={["lecturer"]}><ClassDetailPage /></RoleGuard>,
+      },
+      {
+        path: "qr-attendance",
+        element: <RoleGuard allowed={["lecturer"]}><LiveAttendanceQRPage /></RoleGuard>,
+      },
+
+      // ── Shared (all roles) ─────────────────────────────────────
       {
         path: "notifications",
         element: <NotificationsPage />,
