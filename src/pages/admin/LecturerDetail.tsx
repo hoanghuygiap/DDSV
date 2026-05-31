@@ -153,9 +153,14 @@ export default function LecturerDetailPage() {
     if (tab === "schedule" && !scheduleLoaded) {
       setIsLoadingTab(true)
       try {
-        const data = await LecturerService.getSchedule(Number(id))
-        setSchedule(data ?? [])
+        const [schedData, classData] = await Promise.all([
+          LecturerService.getSchedule(Number(id)),
+          LecturerService.getCourseClasses(Number(id)),
+        ])
+        setSchedule(schedData ?? [])
+        setCourseClasses(classData ?? [])
         setScheduleLoaded(true)
+        setClassesLoaded(true)
       } catch { setSchedule([]) }
       finally { setIsLoadingTab(false) }
     }
@@ -253,22 +258,24 @@ export default function LecturerDetailPage() {
         }
       }
       const first = sessions[0]
+      const cc = courseClasses.find((c) => c.id === lmhId)
       return {
         lmhId, ma_lop: first.ma_lop, ma_hoc_phan: first.ma_hoc_phan, ten_hoc_phan: first.ten_hoc_phan,
+        so_tin_chi: cc?.so_tin_chi ?? 0,
         slots: Array.from(slots.values()).sort((a, b) => {
           const da = a.dayNum === 0 ? 7 : a.dayNum; const db = b.dayNum === 0 ? 7 : b.dayNum
           return da - db || a.batDau.localeCompare(b.batDau)
         }),
       }
     })
-  }, [semesterSessions])
+  }, [semesterSessions, courseClasses])
 
   // ─────────────────────────────────────────────────────────────────────────────
   if (isLoading) return <div className="flex items-center justify-center py-32"><Loader2 size={32} className="animate-spin text-slate-400" /></div>
   if (error || !lecturer) return (
     <div className="flex flex-col items-center justify-center py-32 gap-3">
       <p className="text-sm text-red-500">{error || "Không tìm thấy giảng viên."}</p>
-      <button onClick={() => navigate("/dashboard/lecturers")} className="text-sm text-[#007082] hover:underline">← Quay lại danh sách</button>
+      <button onClick={() => navigate("/dashboard/lecturers")} className="text-sm text-[#185FA5] hover:underline">← Quay lại danh sách</button>
     </div>
   )
 
@@ -284,7 +291,7 @@ export default function LecturerDetailPage() {
 
       {/* BACK */}
       <button onClick={() => navigate("/dashboard/lecturers")}
-        className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#007082] mb-6 w-fit transition-colors">
+        className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#185FA5] mb-6 w-fit transition-colors">
         <ArrowLeft size={16} /> Quay lại danh sách giảng viên
       </button>
 
@@ -292,22 +299,22 @@ export default function LecturerDetailPage() {
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 mb-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-[#1e325c]/10 flex items-center justify-center font-bold text-xl text-[#1e325c] shrink-0">
+            <div className="w-16 h-16 rounded-full bg-[#185FA5]/10 flex items-center justify-center font-medium text-xl text-[#185FA5] shrink-0">
               {initials}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-[#1e325c]">{lecturer.ho_ten}</h1>
+              <h1 className="text-xl font-medium text-[#185FA5]">{lecturer.ho_ten}</h1>
               <p className="text-sm text-slate-500 mt-0.5">
-                Mã GV: <span className="font-bold text-slate-700">{lecturer.ma_giang_vien}</span>
+                Mã GV: <span className="font-medium text-slate-700">{lecturer.ma_giang_vien}</span>
                 {" · "}@{lecturer.username}
               </p>
               <div className="mt-2">
                 {lecturer.kich_hoat ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-medium border border-emerald-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Hoạt động
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold border border-red-100">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-medium border border-red-100">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Bị khóa
                   </span>
                 )}
@@ -317,17 +324,17 @@ export default function LecturerDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {lecturer.kich_hoat ? (
               <button onClick={() => { setLockMinutes("15"); setShowLockModal(true) }}
-                className="flex items-center gap-2 px-4 py-2 border border-amber-300 text-amber-600 rounded-lg text-sm font-bold hover:bg-amber-50 transition-colors">
+                className="flex items-center gap-2 px-4 py-2 border border-amber-300 text-amber-600 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors">
                 <LockKeyhole size={16} /> Khóa TK
               </button>
             ) : (
               <button onClick={() => setShowUnlockModal(true)}
-                className="flex items-center gap-2 px-4 py-2 border border-emerald-300 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-50 transition-colors">
+                className="flex items-center gap-2 px-4 py-2 border border-emerald-300 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-colors">
                 <Unlock size={16} /> Mở khóa
               </button>
             )}
             <button onClick={() => setShowDeleteModal(true)}
-              className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-500 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-500 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors">
               <Trash2 size={16} /> Xóa
             </button>
           </div>
@@ -339,9 +346,9 @@ export default function LecturerDetailPage() {
         <div className="flex border-b border-slate-200 overflow-x-auto">
           {TABS.map((tab) => (
             <button key={tab.key} onClick={() => handleTabChange(tab.key)}
-              className={`flex items-center gap-2 px-6 py-3.5 text-sm font-bold whitespace-nowrap transition-colors border-b-2 ${
+              className={`flex items-center gap-2 px-6 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                 activeTab === tab.key
-                  ? "border-[#007082] text-[#007082] bg-[#007082]/5"
+                  ? "border-[#185FA5] text-[#185FA5]"
                   : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
               }`}>
               {tab.icon} {tab.label}
@@ -371,8 +378,8 @@ export default function LecturerDetailPage() {
                 <div className="flex border-b border-slate-200 mb-4">
                   {([["tuan", "TKB TUẦN"], ["thu-tiet", "TKB THỨ - TIẾT"]] as [ScheduleView, string][]).map(([key, label]) => (
                     <button key={key} onClick={() => setScheduleView(key)}
-                      className={`px-5 py-2.5 text-sm font-bold border-b-2 transition-colors ${
-                        scheduleView === key ? "border-[#1e325c] text-[#1e325c]" : "border-transparent text-slate-500 hover:text-slate-700"
+                      className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                        scheduleView === key ? "border-[#185FA5] text-[#185FA5]" : "border-transparent text-slate-500 hover:text-slate-700"
                       }`}>{label}</button>
                   ))}
                 </div>
@@ -380,9 +387,9 @@ export default function LecturerDetailPage() {
                 {/* Controls */}
                 <div className="flex flex-wrap items-end gap-3 mb-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-medium">Học kỳ</label>
+                    <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">Học kỳ</label>
                     <select value={selectedKy} onChange={(e) => setSelectedKy(e.target.value)}
-                      className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1e325c] min-w-[180px]">
+                      className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]">
                       <option value="">Tất cả học kỳ</option>
                       {semesters.map((ky) => <option key={ky} value={ky}>{ky}</option>)}
                     </select>
@@ -391,14 +398,14 @@ export default function LecturerDetailPage() {
                   {scheduleView === "tuan" && (
                     <>
                       <div className="flex flex-col gap-1">
-                        <label className="text-xs text-slate-500 font-medium">Tuần</label>
+                        <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">Tuần</label>
                         <div className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 min-w-[200px] bg-white">
                           {fmtDate(weekDays[0])} – {fmtDate(weekDays[6])}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 ml-1">
                         <button onClick={gotoFirstWeek} title="Tuần đầu tiên"
-                          className="w-8 h-8 flex items-center justify-center border border-[#1e325c] bg-[#1e325c] text-white rounded hover:bg-[#16274a] transition-colors">
+                          className="w-8 h-8 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors">
                           <ChevronsLeft size={14} />
                         </button>
                         <button onClick={() => setCurrentWeekStart((w) => addDays(w, -7))} title="Tuần trước"
@@ -406,7 +413,7 @@ export default function LecturerDetailPage() {
                           <ChevronLeft size={14} />
                         </button>
                         <button onClick={() => setCurrentWeekStart(getMonday(new Date()))}
-                          className="h-8 px-3 border border-[#1e325c] bg-[#1e325c] text-white text-xs font-bold rounded hover:bg-[#16274a] transition-colors">
+                          className="h-8 px-3 border border-[#185FA5] bg-[#185FA5] text-white text-xs font-medium rounded hover:bg-[#1254a0] transition-colors">
                           Hiện tại
                         </button>
                         <button onClick={() => setCurrentWeekStart((w) => addDays(w, 7))} title="Tuần sau"
@@ -414,7 +421,7 @@ export default function LecturerDetailPage() {
                           <ChevronRight size={14} />
                         </button>
                         <button onClick={gotoLastWeek} title="Tuần cuối cùng"
-                          className="w-8 h-8 flex items-center justify-center border border-[#1e325c] bg-[#1e325c] text-white rounded hover:bg-[#16274a] transition-colors">
+                          className="w-8 h-8 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors">
                           <ChevronsRight size={14} />
                         </button>
                       </div>
@@ -428,10 +435,13 @@ export default function LecturerDetailPage() {
                     <div className="overflow-x-auto rounded-lg border border-slate-200">
                       <table className="w-full border-collapse text-xs" style={{ minWidth: 760 }}>
                         <thead>
-                          <tr className="bg-[#1e325c] text-white">
-                            <th className="border border-[#16274a] px-2 py-3 w-12 text-center font-bold">Tiết</th>
+                          <tr className="bg-[#185FA5] text-white">
+                            <th className="border border-[#1254a0] px-2 py-3 w-12 text-center font-medium text-xs" style={{ minWidth: 68 }}>
+                              <div>Tiết</div>
+                              <div className="font-normal text-[10px] text-blue-200 mt-0.5">Giờ học</div>
+                            </th>
                             {weekDays.map((day, i) => (
-                              <th key={i} className="border border-[#16274a] px-2 py-3 text-center font-bold">
+                              <th key={i} className="border border-[#1254a0] px-2 py-3 text-center font-medium text-xs">
                                 <div>{DAY_NAMES[i]}</div>
                                 <div className="font-normal text-[11px] text-blue-200 mt-0.5">{fmtDate(day)}</div>
                               </th>
@@ -441,30 +451,45 @@ export default function LecturerDetailPage() {
                         <tbody>
                           {TIET_INFO.map(({ tiet, label }) => (
                             <tr key={tiet}>
-                              <td className="border border-slate-200 text-center py-2 bg-slate-50">
-                                <div className="font-bold text-slate-700 text-sm">{tiet}</div>
-                                <div className="text-[10px] text-slate-400">{label}</div>
+                              <td className="border border-slate-200 text-center bg-blue-50 py-2 px-1" style={{ minWidth: 68 }}>
+                                <div className="font-medium text-[#185FA5] text-sm leading-none">{tiet}</div>
+                                <div className="text-[10px] text-slate-500 mt-1 whitespace-nowrap">{label}</div>
                               </td>
                               {Array.from({ length: 7 }, (_, dayIdx) => {
                                 const cell = weekGrid[dayIdx]?.[tiet] ?? null
                                 if (cell?.type === "skip") return <Fragment key={dayIdx} />
-                                if (!cell) return <td key={dayIdx} className="border border-slate-100 bg-white" style={{ minHeight: 44 }} />
+                                if (!cell) return <td key={dayIdx} className="border border-slate-100 bg-white" style={{ height: 52 }} />
                                 const { session, startTiet, endTiet, rowspan } = cell
                                 const soTiet = endTiet - startTiet + 1
+                                const isLive = session.trang_thai === "dang_dien_ra"
+                                const isDone = session.trang_thai === "da_ket_thuc"
+                                const isCancelled = session.trang_thai === "huy"
                                 return (
                                   <td key={dayIdx} rowSpan={rowspan}
-                                    className="border border-slate-200 align-top p-1.5 bg-blue-50/40">
-                                    <div className="text-[11px] leading-relaxed">
-                                      <div className="font-extrabold text-slate-800 mb-0.5">{session.ten_phong || "—"}</div>
-                                      <div className="font-bold text-[#1e325c] leading-tight mb-1">
+                                    className={`border border-[#185FA5]/25 align-top p-0 ${isCancelled ? "opacity-40" : ""}`}
+                                    style={{ verticalAlign: "top" }}>
+                                    <div className={`h-full border-l-4 p-2 text-[11px] leading-relaxed ${
+                                      isLive ? "bg-blue-50 border-[#185FA5]" :
+                                      isDone ? "bg-green-50 border-green-500" :
+                                      isCancelled ? "bg-slate-50 border-slate-300" :
+                                      "bg-blue-50/50 border-[#185FA5]/60"
+                                    }`}>
+                                      <div className="font-medium text-slate-800 mb-0.5 truncate">{session.ten_phong || "—"}</div>
+                                      <div className="font-medium text-[#185FA5] leading-tight mb-1 truncate">
                                         {session.ten_hoc_phan}
                                         {session.ma_hoc_phan && session.ma_hoc_phan !== "—" && (
-                                          <span className="font-normal text-slate-500"> ({session.ma_hoc_phan})</span>
+                                          <span className="font-normal text-[10px] text-slate-500"> ({session.ma_hoc_phan})</span>
                                         )}
                                       </div>
-                                      <div className="text-slate-500">LHP: <span className="font-medium">{session.ma_lop}</span></div>
+                                      <div className="text-slate-500">LHP: <span className="font-medium text-slate-700">{session.ma_lop}</span></div>
                                       <div className="text-slate-500">Tiết: {startTiet}–{endTiet} ({soTiet} tiết)</div>
                                       <div className="text-slate-500">Bắt đầu: {fmtTime(session.gio_bat_dau)}</div>
+                                      {isLive && (
+                                        <div className="flex items-center gap-1 mt-0.5 text-blue-600 font-medium">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse inline-block" />
+                                          Đang diễn ra
+                                        </div>
+                                      )}
                                     </div>
                                   </td>
                                 )
@@ -482,51 +507,66 @@ export default function LecturerDetailPage() {
 
                 {/* ── TKB THỨ - TIẾT ── */}
                 {scheduleView === "thu-tiet" && (
-                  <div className="overflow-x-auto rounded-lg border border-slate-200">
-                    <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
-                      <thead>
-                        <tr className="bg-[#1e325c] text-white">
-                          {["STT", "Mã lớp / Tên học phần", "Mã HP", "Thứ", "Tiết (giờ)", "Phòng", "Tuần"].map((h) => (
-                            <th key={h} className="border border-[#16274a] px-3 py-3 text-left font-bold whitespace-nowrap">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {thuTietData.length === 0 ? (
-                          <tr><td colSpan={7} className="text-center py-10 text-slate-400 border border-slate-200">Không có dữ liệu.</td></tr>
-                        ) : thuTietData.map((item, sttIdx) => {
-                          const rowCount = item.slots.length || 1
-                          return item.slots.map((slot, slotIdx) => {
-                            const startTiet = timeToStartTiet(slot.batDau)
-                            const endTiet = timeToEndTiet(slot.ketThuc)
-                            const dow = slot.dayNum === 0 ? 7 : slot.dayNum
-                            const dayName = dow === 7 ? "Chủ Nhật" : `Thứ ${["","","Hai","Ba","Tư","Năm","Sáu","Bảy","Nhật"][dow]}`
-                            const tietRange = startTiet === endTiet ? `${startTiet}` : `${startTiet}–${endTiet}`
-                            const gioHien = `${tietRange} (${fmtTime(slot.batDau)}–${fmtTime(slot.ketThuc)})`
-                            const tuanRange = `${fmtDate(slot.minDate)} – ${fmtDate(slot.maxDate)}`
-                            return (
-                              <tr key={`${item.lmhId}-${slotIdx}`} className="hover:bg-slate-50 border-b border-slate-100">
-                                {slotIdx === 0 && (
-                                  <>
-                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-bold text-slate-700 align-middle">{sttIdx + 1}</td>
-                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 align-top">
-                                      <div className="font-bold text-[#1e325c]">{item.ma_lop}</div>
-                                      <div className="text-slate-500 mt-0.5">{item.ten_hoc_phan}</div>
-                                    </td>
-                                    <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-slate-500 align-middle">{item.ma_hoc_phan}</td>
-                                  </>
-                                )}
-                                <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700 whitespace-nowrap">{dayName}</td>
-                                <td className="border border-slate-200 px-3 py-2 text-slate-600 whitespace-nowrap">{gioHien}</td>
-                                <td className="border border-slate-200 px-3 py-2 font-bold text-slate-700">{slot.phong || "—"}</td>
-                                <td className="border border-slate-200 px-3 py-2 text-slate-500 whitespace-nowrap">{tuanRange}</td>
-                              </tr>
-                            )
-                          })
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <>
+                    {selectedKy && (
+                      <div className="text-xs font-medium text-[#185FA5] mb-3 uppercase">
+                        Học kỳ: {selectedKy}
+                      </div>
+                    )}
+                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                      <table className="w-full border-collapse text-xs" style={{ minWidth: 900 }}>
+                        <thead>
+                          <tr className="bg-[#185FA5] text-white">
+                            {["STT", "Mã lớp học phần/Tên lớp học phần", "Số TC", "Mã lớp SV", "Thứ", "Tiết(giờ) bắt đầu", "Phòng học", "Tuần", "Cơ sở", "Địa chỉ"].map((h) => (
+                              <th key={h} className="border border-[#1254a0] px-3 py-3 text-left font-medium whitespace-nowrap">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {thuTietData.length === 0 ? (
+                            <tr><td colSpan={10} className="text-center py-10 text-slate-400 border border-slate-200">Không có dữ liệu.</td></tr>
+                          ) : thuTietData.map((item, sttIdx) => {
+                            const rowCount = item.slots.length || 1
+                            return item.slots.map((slot, slotIdx) => {
+                              const startTiet = timeToStartTiet(slot.batDau)
+                              const endTiet = timeToEndTiet(slot.ketThuc)
+                              const dow = slot.dayNum === 0 ? 7 : slot.dayNum
+                              const dayName = dow === 7 ? "Chủ Nhật" : `Thứ ${["","","Hai","Ba","Tư","Năm","Sáu","Bảy","Nhật"][dow]}`
+                              const tietRange = startTiet === endTiet ? `${startTiet}` : `${startTiet}-${endTiet}`
+                              const gioHien = `${tietRange} (${fmtTime(slot.batDau)} - ${fmtTime(slot.ketThuc)})`
+                              const tuanRange = `${fmtDate(slot.minDate)} - ${fmtDate(slot.maxDate)}`
+                              return (
+                                <tr key={`${item.lmhId}-${slotIdx}`} className="hover:bg-slate-50 border-b border-slate-100">
+                                  {slotIdx === 0 && (
+                                    <>
+                                      <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-medium text-slate-700 align-middle">{sttIdx + 1}</td>
+                                      <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 align-top">
+                                        <div className="font-medium text-slate-600">
+                                          {item.ma_lop}-{item.ten_hoc_phan}
+                                          {lecturer && <span className="font-normal">-{lecturer.ho_ten}</span>}
+                                        </div>
+                                        {lecturer?.email && (
+                                          <div className="text-slate-400">(Email: {lecturer.email})</div>
+                                        )}
+                                      </td>
+                                      <td rowSpan={rowCount} className="border border-slate-200 px-3 py-2 text-center font-medium text-slate-700 align-middle">{item.so_tin_chi || "—"}</td>
+                                    </>
+                                  )}
+                                  <td className="border border-slate-200 px-3 py-2 text-slate-600"></td>
+                                  <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700">{dayName}</td>
+                                  <td className="border border-slate-200 px-3 py-2 text-slate-600">{gioHien}</td>
+                                  <td className="border border-slate-200 px-3 py-2 font-medium text-slate-700">{slot.phong || "—"}</td>
+                                  <td className="border border-slate-200 px-3 py-2 text-slate-500 whitespace-nowrap">{tuanRange}</td>
+                                  <td className="border border-slate-200 px-3 py-2 text-slate-500">Cơ sở chính</td>
+                                  <td className="border border-slate-200 px-3 py-2 text-slate-500">Đường Nghiêm Xuân Yêm, Đại học Thăng Long</td>
+                                </tr>
+                              )
+                            })
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             )
@@ -543,25 +583,25 @@ export default function LecturerDetailPage() {
                 <table className="w-full text-sm text-left text-slate-600">
                   <thead className="text-[11px] uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 font-bold">Mã lớp</th>
-                      <th className="px-4 py-3 font-bold">Học phần</th>
-                      <th className="px-4 py-3 font-bold text-center">Tín chỉ</th>
-                      <th className="px-4 py-3 font-bold">Kỳ học</th>
-                      <th className="px-4 py-3 font-bold">Thời gian</th>
-                      <th className="px-4 py-3 font-bold"></th>
+                      <th className="px-4 py-3 font-medium">Mã lớp</th>
+                      <th className="px-4 py-3 font-medium">Học phần</th>
+                      <th className="px-4 py-3 font-medium text-center">Tín chỉ</th>
+                      <th className="px-4 py-3 font-medium">Kỳ học</th>
+                      <th className="px-4 py-3 font-medium">Thời gian</th>
+                      <th className="px-4 py-3 font-medium"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {courseClasses.map((cls) => (
                       <tr key={cls.id}
                         onClick={() => openStudents(cls)}
-                        className="hover:bg-[#007082]/5 cursor-pointer transition-colors group">
-                        <td className="px-4 py-3 font-bold text-[#1e325c] group-hover:text-[#007082]">{cls.ma_lop}</td>
+                        className="hover:bg-[#185FA5]/5 cursor-pointer transition-colors group">
+                        <td className="px-4 py-3 font-medium text-[#185FA5] group-hover:text-[#185FA5]">{cls.ma_lop}</td>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-[#007082]">{cls.ten_hoc_phan}</p>
+                          <p className="font-medium text-[#185FA5]">{cls.ten_hoc_phan}</p>
                           <p className="text-xs text-slate-400">{cls.ma_hoc_phan}</p>
                         </td>
-                        <td className="px-4 py-3 text-center font-bold">{cls.so_tin_chi}</td>
+                        <td className="px-4 py-3 text-center font-medium">{cls.so_tin_chi}</td>
                         <td className="px-4 py-3">{cls.ten_ky}</td>
                         <td className="px-4 py-3 text-xs text-slate-500">
                           {cls.bat_dau ? new Date(cls.bat_dau).toLocaleDateString("vi-VN") : "—"}
@@ -569,7 +609,7 @@ export default function LecturerDetailPage() {
                           {cls.ket_thuc ? new Date(cls.ket_thuc).toLocaleDateString("vi-VN") : "—"}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 text-xs text-[#007082] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="inline-flex items-center gap-1 text-xs text-[#185FA5] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                             <Users size={13} /> Xem DS
                           </span>
                         </td>
@@ -590,15 +630,15 @@ export default function LecturerDetailPage() {
             {/* Header */}
             <div className="flex items-start justify-between gap-3 px-6 py-4 border-b border-slate-200 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#007082]/10 flex items-center justify-center shrink-0">
-                  <GraduationCap size={20} className="text-[#007082]" />
+                <div className="w-10 h-10 rounded-full bg-[#185FA5]/10 flex items-center justify-center shrink-0">
+                  <GraduationCap size={20} className="text-[#185FA5]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-800">{selectedClass.ten_hoc_phan}</h2>
+                  <h2 className="text-base font-medium text-slate-800">{selectedClass.ten_hoc_phan}</h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Lớp: <span className="font-bold text-slate-700">{selectedClass.ma_lop}</span>
+                    Lớp: <span className="font-medium text-slate-700">{selectedClass.ma_lop}</span>
                     {" · "}{selectedClass.ten_ky}
-                    {studentsTotal > 0 && <> · <span className="font-bold text-[#007082]">{studentsTotal} sinh viên</span></>}
+                    {studentsTotal > 0 && <> · <span className="font-medium text-[#185FA5]">{studentsTotal} sinh viên</span></>}
                   </p>
                 </div>
               </div>
@@ -624,17 +664,17 @@ export default function LecturerDetailPage() {
                 <table className="w-full text-sm text-left">
                   <thead className="text-[11px] uppercase text-slate-500 bg-slate-50 border-b border-slate-200 sticky top-0">
                     <tr>
-                      <th className="px-6 py-3 font-bold w-10 text-center">STT</th>
-                      <th className="px-4 py-3 font-bold">Mã sinh viên</th>
-                      <th className="px-4 py-3 font-bold">Họ tên</th>
-                      <th className="px-4 py-3 font-bold">Lớp hành chính</th>
+                      <th className="px-6 py-3 font-medium w-10 text-center">STT</th>
+                      <th className="px-4 py-3 font-medium">Mã sinh viên</th>
+                      <th className="px-4 py-3 font-medium">Họ tên</th>
+                      <th className="px-4 py-3 font-medium">Lớp hành chính</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {classStudents.map((sv, idx) => (
                       <tr key={sv.id} className="hover:bg-slate-50/60">
                         <td className="px-6 py-3 text-center text-slate-400 text-xs">{idx + 1}</td>
-                        <td className="px-4 py-3 font-mono font-bold text-slate-700">{sv.ma_sinh_vien}</td>
+                        <td className="px-4 py-3 font-mono font-medium text-slate-700">{sv.ma_sinh_vien}</td>
                         <td className="px-4 py-3 font-medium text-slate-800">{sv.ho_ten}</td>
                         <td className="px-4 py-3 text-slate-500">{sv.ten_lop || "—"}</td>
                       </tr>
@@ -663,17 +703,17 @@ export default function LecturerDetailPage() {
               <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
                 <LockKeyhole size={20} className="text-amber-500" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800">Khóa tài khoản</h2>
+              <h2 className="text-lg font-medium text-slate-800">Khóa tài khoản</h2>
             </div>
             <div className="px-6 py-5 space-y-4">
               <p className="text-sm text-slate-500">Bạn sắp khóa tài khoản của{" "}
-                <span className="font-bold text-slate-800">{lecturer.ho_ten}</span>.</p>
+                <span className="font-medium text-slate-800">{lecturer.ho_ten}</span>.</p>
               <div>
-                <label className="text-xs font-bold text-slate-600 mb-2 block">Thời gian khóa</label>
+                <label className="text-xs font-medium text-slate-600 mb-2 block">Thời gian khóa</label>
                 <div className="flex gap-2 mb-3">
                   {["15", "30", "60"].map((m) => (
                     <button key={m} onClick={() => setLockMinutes(m)}
-                      className={`flex-1 py-1.5 rounded-lg text-sm font-bold border transition-colors ${
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                         lockMinutes === m ? "bg-amber-500 text-white border-amber-500" : "border-slate-200 text-slate-600 hover:bg-slate-50"
                       }`}>{m} phút</button>
                   ))}
@@ -688,7 +728,7 @@ export default function LecturerDetailPage() {
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50/50 rounded-b-xl">
               <button onClick={() => setShowLockModal(false)} className="px-4 py-2 text-sm text-slate-600" disabled={isLocking}>Hủy</button>
               <button onClick={handleLock} disabled={isLocking}
-                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-5 py-2 text-sm font-bold disabled:opacity-60">
+                className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-5 py-2 text-sm font-medium disabled:opacity-60">
                 {isLocking && <Loader2 size={14} className="animate-spin" />} Khóa tài khoản
               </button>
             </div>
@@ -704,14 +744,14 @@ export default function LecturerDetailPage() {
               <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
                 <Unlock size={20} className="text-emerald-500" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800">Mở khóa tài khoản</h2>
+              <h2 className="text-lg font-medium text-slate-800">Mở khóa tài khoản</h2>
             </div>
             <p className="text-sm text-slate-500 mb-6">Bạn có chắc muốn mở khóa tài khoản của{" "}
-              <span className="font-bold text-slate-800">{lecturer.ho_ten}</span>?</p>
+              <span className="font-medium text-slate-800">{lecturer.ho_ten}</span>?</p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowUnlockModal(false)} className="px-4 py-2 text-sm text-slate-600" disabled={isLocking}>Hủy</button>
               <button onClick={handleUnlock} disabled={isLocking}
-                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-5 py-2 text-sm font-bold disabled:opacity-60">
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-5 py-2 text-sm font-medium disabled:opacity-60">
                 {isLocking && <Loader2 size={14} className="animate-spin" />} Mở khóa
               </button>
             </div>
@@ -723,15 +763,15 @@ export default function LecturerDetailPage() {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-2">Xác nhận xóa</h2>
+            <h2 className="text-lg font-medium text-slate-800 mb-2">Xác nhận xóa</h2>
             <p className="text-sm text-slate-500 mb-6">
               Bạn có chắc muốn xóa giảng viên{" "}
-              <span className="font-bold text-slate-800">{lecturer.ho_ten}</span>? Hành động này không thể hoàn tác.
+              <span className="font-medium text-slate-800">{lecturer.ho_ten}</span>? Hành động này không thể hoàn tác.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 text-sm text-slate-600" disabled={isDeleting}>Hủy</button>
               <button onClick={handleDelete} disabled={isDeleting}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-lg px-5 py-2 text-sm font-bold disabled:opacity-60">
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white rounded-lg px-5 py-2 text-sm font-medium disabled:opacity-60">
                 {isDeleting && <Loader2 size={14} className="animate-spin" />} Xóa
               </button>
             </div>
@@ -748,7 +788,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
       <div className="text-slate-400 mt-0.5 shrink-0">{icon}</div>
       <div>
         <p className="text-xs text-slate-400 font-medium mb-1">{label}</p>
-        <p className="text-sm font-bold text-slate-700">{value}</p>
+        <p className="text-sm font-medium text-slate-700">{value}</p>
       </div>
     </div>
   )
