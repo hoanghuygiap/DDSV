@@ -18,6 +18,7 @@ import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
 import MyClassesPage from "@/pages/lecturer/MyClasses"
 import ClassDetailPage from "@/pages/lecturer/ClassDetail"
 import LiveAttendanceQRPage from "@/pages/lecturer/LiveAttendanceQR"
+import ClassReportPage from "@/pages/lecturer/ClassReport"
 import StudentReportPage from "@/pages/student/StudentReport"
 import StudentSchedulePage from "@/pages/student/StudentSchedule"
 
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: "qr-attendance",
         element: <RoleGuard allowed={["lecturer"]}><LiveAttendanceQRPage /></RoleGuard>,
+      },
+      {
+        path: "class-report",
+        element: <RoleGuard allowed={["lecturer"]}><ClassReportPage /></RoleGuard>,
       },
       {
         path: "student-reports",
