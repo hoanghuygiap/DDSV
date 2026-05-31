@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { GraduationCap, LogOut } from "lucide-react"
+import { GraduationCap, LogOut, UserCircle, Bell, ChevronRight, Mail } from "lucide-react"
 import { MENU_DATA } from "@/constants"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Role } from "@/types"
+import { useEffect, useRef, useState } from "react"
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
@@ -28,6 +29,19 @@ export default function DashboardLayout() {
   const avatarInitials = user?.ho_ten
     ? user.ho_ten.split(" ").slice(-2).map((w) => w[0]).join("").toUpperCase()
     : role === "admin" ? "AD" : role === "lecturer" ? "GV" : "SV"
+
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -65,10 +79,6 @@ export default function DashboardLayout() {
                 {role === "admin" ? "Quản trị viên" : role === "lecturer" ? "Giảng viên" : "Sinh viên"}
               </p>
             </div>
-            <button onClick={handleLogout} title="Đăng xuất"
-              className="text-slate-500 hover:text-red-400 transition-colors shrink-0">
-              <LogOut size={15} />
-            </button>
           </div>
         </div>
 
@@ -107,11 +117,88 @@ export default function DashboardLayout() {
         {/* Header */}
         <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
           <h2 className="text-base font-medium text-slate-800">{pageTitle}</h2>
-          <Avatar className="h-8 w-8 border border-slate-200 cursor-pointer">
-            <AvatarFallback className="bg-[#185FA5] text-white text-xs font-medium">
-              {avatarInitials}
-            </AvatarFallback>
-          </Avatar>
+
+          {/* Avatar + dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu((v) => !v)}
+              className="focus:outline-none"
+            >
+              <Avatar className="h-8 w-8 border-2 border-[#185FA5]/30 cursor-pointer hover:ring-2 hover:ring-[#185FA5]/40 transition-all">
+                <AvatarFallback className="bg-[#185FA5] text-white text-xs font-medium">
+                  {avatarInitials}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+
+            {showMenu && (
+              <div
+                className="absolute right-0 top-10 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                {/* User info */}
+                <div className="px-4 py-4 bg-slate-50 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 shrink-0">
+                      <AvatarFallback className="bg-[#185FA5] text-white text-sm font-medium">
+                        {avatarInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {user?.ho_ten || "—"}
+                      </p>
+                      <p className="text-xs text-slate-500 truncate">
+                        {role === "admin" ? "Quản trị viên" : role === "lecturer" ? "Giảng viên" : "Sinh viên"}
+                      </p>
+                    </div>
+                  </div>
+                  {user?.email && (
+                    <div className="flex items-center gap-1.5 mt-2.5">
+                      <Mail size={12} className="text-slate-400 shrink-0" />
+                      <span className="text-xs text-slate-500 truncate">{user.email}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Menu items */}
+                <div className="py-1.5">
+                  <button
+                    onClick={() => { navigate("/dashboard/profile"); setShowMenu(false) }}
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <UserCircle size={16} className="text-slate-400" />
+                      <span className="font-normal">Hồ sơ cá nhân</span>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-300" />
+                  </button>
+
+                  <button
+                    onClick={() => { navigate("/dashboard/notifications"); setShowMenu(false) }}
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Bell size={16} className="text-slate-400" />
+                      <span className="font-normal">Thông báo</span>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-300" />
+                  </button>
+                </div>
+
+                {/* Logout */}
+                <div className="border-t border-slate-100 py-1.5">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span className="font-normal">Đăng xuất</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Content */}

@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
 import { RoleGuard } from "@/components/RoleGuard"
 import LoginPage from "@/pages/auth/Login"
-import RegisterPage from "@/pages/auth/Register"
+
 import ForgotPasswordPage from "@/pages/auth/ForgotPassword"
 import DashboardLayout from "@/layout/DashboardLayout"
 import DashboardHome from "@/pages/DashboardHome"
@@ -18,6 +18,8 @@ import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
 import MyClassesPage from "@/pages/lecturer/MyClasses"
 import ClassDetailPage from "@/pages/lecturer/ClassDetail"
 import LiveAttendanceQRPage from "@/pages/lecturer/LiveAttendanceQR"
+import StudentReportPage from "@/pages/student/StudentReport"
+import StudentSchedulePage from "@/pages/student/StudentSchedule"
 
 export const router = createBrowserRouter([
   {
@@ -28,10 +30,7 @@ export const router = createBrowserRouter([
     path: "/login",
     element: <LoginPage />,
   },
-  {
-    path: "/register",
-    element: <RegisterPage />,
-  },
+
   {
     path: "/forgot-password",
     element: <ForgotPasswordPage />,
@@ -91,6 +90,14 @@ export const router = createBrowserRouter([
       {
         path: "qr-attendance",
         element: <RoleGuard allowed={["lecturer"]}><LiveAttendanceQRPage /></RoleGuard>,
+      },
+      {
+        path: "student-reports",
+        element: <RoleGuard allowed={["student"]}><StudentReportPage /></RoleGuard>,
+      },
+      {
+        path: "student-schedule",
+        element: <RoleGuard allowed={["student"]}><StudentSchedulePage /></RoleGuard>,
       },
 
       // ── Shared (all roles) ─────────────────────────────────────

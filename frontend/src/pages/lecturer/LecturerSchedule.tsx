@@ -306,10 +306,7 @@ export default function LecturerSchedulePage() {
         <div className="bg-white border border-slate-200 rounded-b-xl rounded-tr-xl shadow-sm p-4">
           {/* Controls */}
           <div className="flex flex-wrap items-end gap-3 mb-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">
-                Học kỳ
-              </label>
+            <div>
               <select
                 value={selectedKy}
                 onChange={(e) => setSelectedKy(e.target.value)}
@@ -322,10 +319,7 @@ export default function LecturerSchedulePage() {
               </select>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">
-                Tuần
-              </label>
+            <div>
               <div className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 min-w-[200px] bg-white">
                 {fmtDate(weekDays[0])}–{fmtDate(weekDays[6])}
               </div>
@@ -445,10 +439,7 @@ export default function LecturerSchedulePage() {
         <div className="bg-white border border-slate-200 rounded-b-xl rounded-tr-xl shadow-sm p-4">
           {/* Controls */}
           <div className="flex flex-wrap items-end gap-3 mb-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">
-                Học kỳ
-              </label>
+            <div>
               <select
                 value={selectedKy}
                 onChange={(e) => setSelectedKy(e.target.value)}

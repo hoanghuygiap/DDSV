@@ -156,12 +156,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center text-sm">
-            <span className="text-slate-500">Chưa có tài khoản? </span>
-            <Link to="/register" className="font-bold text-[#1e325c] hover:underline transition-colors">
-              Đăng ký ngay
-            </Link>
-          </div>
         </div>
       </div>
     </div>
