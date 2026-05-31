@@ -89,6 +89,15 @@ function statusLabel(t: string) {
        : "Đã hủy"
 }
 
+function sortByProximity(data: Session[]) {
+  const now = Date.now()
+  data.sort((a, b) => {
+    const da = Math.abs(parseSessionDate(a.ngay_hoc).getTime() - now)
+    const db = Math.abs(parseSessionDate(b.ngay_hoc).getTime() - now)
+    return da - db || a.gio_bat_dau.localeCompare(b.gio_bat_dau)
+  })
+}
+
 type AppliedFilters = { date: string; lecturerId: string; semesterId: string; status: string }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -154,10 +163,18 @@ export default function SchedulePage() {
         ? semRef.current.find(s => String(s.id) === semesterId)
         : null
 
-      // ── CASE 1: Lecturer filter active ─────────────────────────────────────
-      if (lecturerId !== "") {
-        const res = await api.get(`/lecturers/${lecturerId}/schedule`)
-        let data: Session[] = (res.data?.data ?? []).map(normalizeLecturerSession)
+      // ── CLIENT MODE: lecturer or semester selected ──────────────────────────
+      // Fetch full dataset, then apply all active filters locally
+      if (lecturerId !== "" || semesterId !== "") {
+        let data: Session[]
+
+        if (lecturerId !== "") {
+          const res = await api.get(`/lecturers/${lecturerId}/schedule`)
+          data = (res.data?.data ?? []).map(normalizeLecturerSession)
+        } else {
+          const res = await api.get("/sessions", { params: { limit: 1000, page: 1 } })
+          data = res.data?.data ?? []
+        }
 
         if (date) {
           data = data.filter(s => isoDate(s.ngay_hoc) === date)
@@ -174,54 +191,20 @@ export default function SchedulePage() {
           data = data.filter(s => s.trang_thai === status)
         }
 
-        data.sort((a, b) =>
-          isoDate(b.ngay_hoc).localeCompare(isoDate(a.ngay_hoc)) ||
-          b.gio_bat_dau.localeCompare(a.gio_bat_dau)
-        )
+        sortByProximity(data)
         setClientData(data)
         setSessions([])
         return
       }
 
-      // ── CASE 2: Semester filter (no lecturer, no specific date) ─────────────
-      if (semesterId !== "" && !date) {
-        const res = await api.get("/sessions", { params: { limit: 1000, page: 1 } })
-        let data: Session[] = res.data?.data ?? []
-
-        if (semester) {
-          const batDau  = isoDate(semester.bat_dau)
-          const ketThuc = isoDate(semester.ket_thuc)
-          data = data.filter(s => {
-            const d = isoDate(s.ngay_hoc)
-            return d >= batDau && d <= ketThuc
-          })
-        }
-        if (status) {
-          data = data.filter(s => s.trang_thai === status)
-        }
-
-        setClientData(data)
-        setSessions([])
-        return
-      }
-
-      // ── CASE 3: Server-side (date only, or no filters) ──────────────────────
+      // ── SERVER MODE: only date/status (or no filters) ───────────────────────
       const params: Record<string, string | number> = { page: pg, limit: PAGE_SIZE }
       if (date)   params.date   = date
       if (status) params.status = status
 
       const res = await api.get("/sessions", { params })
-      let data: Session[] = res.data?.data ?? []
-
-      // If semester + date both set: apply semester date range client-side
-      if (semesterId && date && semester) {
-        const batDau  = isoDate(semester.bat_dau)
-        const ketThuc = isoDate(semester.ket_thuc)
-        data = data.filter(s => {
-          const d = isoDate(s.ngay_hoc)
-          return d >= batDau && d <= ketThuc
-        })
-      }
+      const data: Session[] = res.data?.data ?? []
+      sortByProximity(data)
 
       setSessions(data)
       setPagination(
@@ -237,7 +220,7 @@ export default function SchedulePage() {
   }
 
   // ── Is client-side pagination mode? ───────────────────────────────────────
-  const isClientMode = applied.lecturerId !== "" || (applied.semesterId !== "" && applied.date === "")
+  const isClientMode = applied.lecturerId !== "" || applied.semesterId !== ""
 
   // ── Client page slice ──────────────────────────────────────────────────────
   const clientPageData = useMemo(() => {
