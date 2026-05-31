@@ -144,22 +144,17 @@ export function StudentDashboard() {
           )
       )
 
-      // 2. Lịch sử điểm danh — tìm sinh_vien.id qua search
-      try {
-        const svRes = await api.get("/students", {
-          params: { keyword: user?.email, limit: 20 },
-        })
-        const mine = (svRes.data?.data ?? []).find(
-          (s: any) => s.tai_khoan_id === user?.id
-        )
-        if (mine) {
-          const attRes = await api.get(`/attendance/student/${mine.id}`, {
+      // 2. Lịch sử điểm danh — dùng sinh_vien_id từ dashboard
+      const sinhVienId: number | undefined = data.sinh_vien_id
+      if (sinhVienId) {
+        try {
+          const attRes = await api.get(`/attendance/student/${sinhVienId}`, {
             params: { limit: 5 },
           })
-          setRecentAtt((attRes.data?.data ?? []).slice(0, 5))
+          setRecentAtt((attRes.data?.data?.data ?? []).slice(0, 5))
           setHasAtt(true)
-        }
-      } catch { /* 403 — không có quyền */ }
+        } catch { /* silent */ }
+      }
 
     } catch (err) {
       console.error("StudentDashboard error:", err)

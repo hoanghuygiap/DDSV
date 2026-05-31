@@ -386,8 +386,7 @@ export default function LecturerDetailPage() {
 
                 {/* Controls */}
                 <div className="flex flex-wrap items-end gap-3 mb-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">Học kỳ</label>
+                  <div>
                     <select value={selectedKy} onChange={(e) => setSelectedKy(e.target.value)}
                       className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]">
                       <option value="">Tất cả học kỳ</option>
@@ -397,8 +396,7 @@ export default function LecturerDetailPage() {
 
                   {scheduleView === "tuan" && (
                     <>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs text-slate-500 font-medium border border-slate-300 px-2 py-0.5 rounded-t rounded-b-none -mb-px bg-white relative z-10">Tuần</label>
+                      <div>
                         <div className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 min-w-[200px] bg-white">
                           {fmtDate(weekDays[0])} – {fmtDate(weekDays[6])}
                         </div>
