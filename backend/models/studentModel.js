@@ -1,70 +1,159 @@
-const db = require('../config/db');
-const { pagingData } = require('../utils/pagination');
+const db = require("../config/db");
+const { pagingData } = require("../utils/pagination");
 
 class StudentModel {
-    static async getAllStudents(query, pagination) {
-        const { page, limit, offset } = pagination;
-        const keyword = query.keyword || '';
-        const searchValue = `%${keyword}%`;
+  // static async getAllStudents(query, pagination) {
+  //     const { page, limit, offset } = pagination;
+  //     const keyword = query.keyword || '';
+  //     const searchValue = `%${keyword}%`;
 
-        const whereSql = `
-            FROM sinh_vien sv
-            JOIN tai_khoan tk ON sv.tai_khoan_id = tk.id
-            LEFT JOIN lop_hanh_chinh lhc ON sv.lop_id = lhc.id
-            LEFT JOIN nganh n ON lhc.nganh_id = n.id
-            LEFT JOIN khoa k ON n.khoa_id = k.id
-            WHERE sv.deleted_at IS NULL
+  //     const whereSql = `
+  //         FROM sinh_vien sv
+  //         JOIN tai_khoan tk ON sv.tai_khoan_id = tk.id
+  //         LEFT JOIN lop_hanh_chinh lhc ON sv.lop_id = lhc.id
+  //         LEFT JOIN nganh n ON lhc.nganh_id = n.id
+  //         LEFT JOIN khoa k ON n.khoa_id = k.id
+  //         WHERE sv.deleted_at IS NULL
+  //         AND (
+  //             sv.ma_sinh_vien LIKE ?
+  //             OR sv.ho_ten LIKE ?
+  //             OR sv.email LIKE ?
+  //             OR sv.sdt LIKE ?
+  //             OR lhc.ten_lop LIKE ?
+  //         )
+  //     `;
+
+  //     const params = [
+  //         searchValue,
+  //         searchValue,
+  //         searchValue,
+  //         searchValue,
+  //         searchValue
+  //     ];
+
+  //     const [countRows] = await db.query(
+  //         `SELECT COUNT(*) AS total ${whereSql}`,
+  //         params
+  //     );
+
+  //     const [rows] = await db.query(
+  //         `
+  //         SELECT
+  //             sv.id,
+  //             sv.tai_khoan_id,
+  //             sv.ma_sinh_vien,
+  //             sv.ho_ten,
+  //             sv.email,
+  //             sv.sdt,
+  //             sv.lop_id,
+  //             lhc.ten_lop,
+  //             n.ten_nganh,
+  //             k.ten_khoa,
+  //             tk.username,
+  //             tk.kich_hoat,
+  //             tk.created_at
+  //         ${whereSql}
+  //         ORDER BY sv.id DESC
+  //         LIMIT ? OFFSET ?
+  //         `,
+  //         [...params, limit, offset]
+  //     );
+
+  //     return pagingData(rows, countRows[0].total, page, limit);
+  // }
+  static async getAllStudents(query, pagination) {
+    const { page, limit, offset } = pagination;
+
+    const keyword = query.keyword || "";
+    const facultyId = query.faculty_id || query.khoa_id || null;
+    const majorId = query.major_id || query.nganh_id || null;
+    const classId = query.class_id || query.lop_id || null;
+
+    let whereSql = `
+        FROM sinh_vien sv
+        JOIN tai_khoan tk ON sv.tai_khoan_id = tk.id
+        LEFT JOIN lop_hanh_chinh lhc ON sv.lop_id = lhc.id
+        LEFT JOIN nganh n ON lhc.nganh_id = n.id
+        LEFT JOIN khoa k ON n.khoa_id = k.id
+        WHERE sv.deleted_at IS NULL
+    `;
+
+    const params = [];
+
+    if (keyword) {
+      whereSql += `
             AND (
                 sv.ma_sinh_vien LIKE ?
                 OR sv.ho_ten LIKE ?
                 OR sv.email LIKE ?
                 OR sv.sdt LIKE ?
+                OR tk.username LIKE ?
                 OR lhc.ten_lop LIKE ?
             )
         `;
 
-        const params = [
-            searchValue,
-            searchValue,
-            searchValue,
-            searchValue,
-            searchValue
-        ];
-
-        const [countRows] = await db.query(
-            `SELECT COUNT(*) AS total ${whereSql}`,
-            params
-        );
-
-        const [rows] = await db.query(
-            `
-            SELECT
-                sv.id,
-                sv.tai_khoan_id,
-                sv.ma_sinh_vien,
-                sv.ho_ten,
-                sv.email,
-                sv.sdt,
-                sv.lop_id,
-                lhc.ten_lop,
-                n.ten_nganh,
-                k.ten_khoa,
-                tk.username,
-                tk.kich_hoat,
-                tk.created_at
-            ${whereSql}
-            ORDER BY sv.id DESC
-            LIMIT ? OFFSET ?
-            `,
-            [...params, limit, offset]
-        );
-
-        return pagingData(rows, countRows[0].total, page, limit);
+      const searchValue = `%${keyword}%`;
+      params.push(
+        searchValue,
+        searchValue,
+        searchValue,
+        searchValue,
+        searchValue,
+        searchValue,
+      );
     }
 
-    static async getStudentById(id) {
-        const [rows] = await db.query(
-            `
+    if (facultyId) {
+      whereSql += ` AND k.id = ? `;
+      params.push(facultyId);
+    }
+
+    if (majorId) {
+      whereSql += ` AND n.id = ? `;
+      params.push(majorId);
+    }
+
+    if (classId) {
+      whereSql += ` AND lhc.id = ? `;
+      params.push(classId);
+    }
+
+    const [countRows] = await db.query(
+      `SELECT COUNT(*) AS total ${whereSql}`,
+      params,
+    );
+
+    const [rows] = await db.query(
+      `
+        SELECT
+            sv.id,
+            sv.tai_khoan_id,
+            sv.ma_sinh_vien,
+            sv.ho_ten,
+            sv.email,
+            sv.sdt,
+            sv.lop_id,
+            lhc.ten_lop,
+            n.id AS nganh_id,
+            n.ten_nganh,
+            k.id AS khoa_id,
+            k.ten_khoa,
+            tk.username,
+            tk.kich_hoat,
+            tk.created_at
+        ${whereSql}
+        ORDER BY sv.id DESC
+        LIMIT ? OFFSET ?
+        `,
+      [...params, limit, offset],
+    );
+
+    return pagingData(rows, countRows[0].total, page, limit);
+  }
+
+  static async getStudentById(id) {
+    const [rows] = await db.query(
+      `
             SELECT
                 sv.id,
                 sv.tai_khoan_id,
@@ -88,114 +177,109 @@ class StudentModel {
             WHERE sv.id = ?
             AND sv.deleted_at IS NULL
             `,
-            [id]
-        );
+      [id],
+    );
 
-        return rows[0];
-    }
+    return rows[0];
+  }
 
-    static async createStudent(data) {
-        const connection = await db.getConnection();
+  static async createStudent(data) {
+    const connection = await db.getConnection();
 
-        try {
-            await connection.beginTransaction();
+    try {
+      await connection.beginTransaction();
 
-            const [accountResult] = await connection.query(
-                `
+      const [accountResult] = await connection.query(
+        `
                 INSERT INTO tai_khoan
                 (username, password_hash, ho_ten, email, kich_hoat)
                 VALUES (?, ?, ?, ?, TRUE)
                 `,
-                [
-                    data.username,
-                    data.password_hash,
-                    data.ho_ten,
-                    data.email
-                ]
-            );
+        [data.username, data.password_hash, data.ho_ten, data.email],
+      );
 
-            const taiKhoanId = accountResult.insertId;
+      const taiKhoanId = accountResult.insertId;
 
-            const [roleRows] = await connection.query(
-                `
+      const [roleRows] = await connection.query(
+        `
                 SELECT id
                 FROM vai_tro
                 WHERE ten_vai_tro = 'sinh_vien'
-                `
-            );
+                `,
+      );
 
-            if (roleRows.length === 0) {
-                throw new Error('Chưa có vai trò sinh_vien');
-            }
+      if (roleRows.length === 0) {
+        throw new Error("Chưa có vai trò sinh_vien");
+      }
 
-            await connection.query(
-                `
+      await connection.query(
+        `
                 INSERT INTO tai_khoan_vai_tro
                 (tai_khoan_id, vai_tro_id)
                 VALUES (?, ?)
                 `,
-                [taiKhoanId, roleRows[0].id]
-            );
+        [taiKhoanId, roleRows[0].id],
+      );
 
-            const [studentResult] = await connection.query(
-                `
+      const [studentResult] = await connection.query(
+        `
                 INSERT INTO sinh_vien
                 (tai_khoan_id, ma_sinh_vien, ho_ten, email, sdt, lop_id)
                 VALUES (?, ?, ?, ?, ?, ?)
                 `,
-                [
-                    taiKhoanId,
-                    data.ma_sinh_vien,
-                    data.ho_ten,
-                    data.email,
-                    data.sdt,
-                    data.lop_id || null
-                ]
-            );
+        [
+          taiKhoanId,
+          data.ma_sinh_vien,
+          data.ho_ten,
+          data.email,
+          data.sdt,
+          data.lop_id || null,
+        ],
+      );
 
-            await connection.commit();
+      await connection.commit();
 
-            return {
-                id: studentResult.insertId,
-                tai_khoan_id: taiKhoanId
-            };
-        } catch (error) {
-            await connection.rollback();
+      return {
+        id: studentResult.insertId,
+        tai_khoan_id: taiKhoanId,
+      };
+    } catch (error) {
+      await connection.rollback();
 
-            if (error.code === 'ER_DUP_ENTRY') {
-                throw new Error('Username, email hoặc mã sinh viên đã tồn tại');
-            }
+      if (error.code === "ER_DUP_ENTRY") {
+        throw new Error("Username, email hoặc mã sinh viên đã tồn tại");
+      }
 
-            throw error;
-        } finally {
-            connection.release();
-        }
+      throw error;
+    } finally {
+      connection.release();
     }
+  }
 
-    static async updateStudent(id, data) {
-        const connection = await db.getConnection();
+  static async updateStudent(id, data) {
+    const connection = await db.getConnection();
 
-        try {
-            await connection.beginTransaction();
+    try {
+      await connection.beginTransaction();
 
-            const [studentRows] = await connection.query(
-                `
+      const [studentRows] = await connection.query(
+        `
                 SELECT tai_khoan_id
                 FROM sinh_vien
                 WHERE id = ?
                 AND deleted_at IS NULL
                 `,
-                [id]
-            );
+        [id],
+      );
 
-            if (studentRows.length === 0) {
-                throw new Error('Sinh viên không tồn tại');
-            }
+      if (studentRows.length === 0) {
+        throw new Error("Sinh viên không tồn tại");
+      }
 
-            const taiKhoanId = studentRows[0].tai_khoan_id;
+      const taiKhoanId = studentRows[0].tai_khoan_id;
 
-            await connection.query(
-                `
+      await connection.query(
+        `
                 UPDATE sinh_vien
                 SET
                     ma_sinh_vien = COALESCE(?, ma_sinh_vien),
@@ -205,18 +289,11 @@ class StudentModel {
                     lop_id = COALESCE(?, lop_id)
                 WHERE id = ?
                 `,
-                [
-                    data.ma_sinh_vien,
-                    data.ho_ten,
-                    data.email,
-                    data.sdt,
-                    data.lop_id,
-                    id
-                ]
-            );
+        [data.ma_sinh_vien, data.ho_ten, data.email, data.sdt, data.lop_id, id],
+      );
 
-            await connection.query(
-                `
+      await connection.query(
+        `
                 UPDATE tai_khoan
                 SET
                     ho_ten = COALESCE(?, ho_ten),
@@ -224,60 +301,55 @@ class StudentModel {
                     kich_hoat = COALESCE(?, kich_hoat)
                 WHERE id = ?
                 `,
-                [
-                    data.ho_ten,
-                    data.email,
-                    data.kich_hoat,
-                    taiKhoanId
-                ]
-            );
+        [data.ho_ten, data.email, data.kich_hoat, taiKhoanId],
+      );
 
-            await connection.commit();
+      await connection.commit();
 
-            return await this.getStudentById(id);
-        } catch (error) {
-            await connection.rollback();
+      return await this.getStudentById(id);
+    } catch (error) {
+      await connection.rollback();
 
-            if (error.code === 'ER_DUP_ENTRY') {
-                throw new Error('Email hoặc mã sinh viên đã tồn tại');
-            }
+      if (error.code === "ER_DUP_ENTRY") {
+        throw new Error("Email hoặc mã sinh viên đã tồn tại");
+      }
 
-            throw error;
-        } finally {
-            connection.release();
-        }
+      throw error;
+    } finally {
+      connection.release();
     }
+  }
 
-    static async deleteStudent(id) {
-        const [result] = await db.query(
-            `
+  static async deleteStudent(id) {
+    const [result] = await db.query(
+      `
             UPDATE sinh_vien
             SET deleted_at = NOW()
             WHERE id = ?
             AND deleted_at IS NULL
             `,
-            [id]
-        );
+      [id],
+    );
 
-        return result;
-    }
+    return result;
+  }
 
-    static async getStudentClasses(id, pagination) {
-        const { page, limit, offset } = pagination;
+  static async getStudentClasses(id, pagination) {
+    const { page, limit, offset } = pagination;
 
-        const [countRows] = await db.query(
-            `
+    const [countRows] = await db.query(
+      `
             SELECT COUNT(*) AS total
             FROM dang_ky_lop dk
             JOIN lop_mon_hoc lmh ON dk.lop_mon_hoc_id = lmh.id
             WHERE dk.sinh_vien_id = ?
             AND lmh.deleted_at IS NULL
             `,
-            [id]
-        );
+      [id],
+    );
 
-        const [rows] = await db.query(
-            `
+    const [rows] = await db.query(
+      `
             SELECT
                 lmh.id,
                 lmh.ma_lop,
@@ -296,17 +368,17 @@ class StudentModel {
             ORDER BY lmh.id DESC
             LIMIT ? OFFSET ?
             `,
-            [id, limit, offset]
-        );
+      [id, limit, offset],
+    );
 
-        return pagingData(rows, countRows[0].total, page, limit);
-    }
+    return pagingData(rows, countRows[0].total, page, limit);
+  }
 
-    static async getStudentSchedule(id, pagination) {
-        const { page, limit, offset } = pagination;
+  static async getStudentSchedule(id, pagination) {
+    const { page, limit, offset } = pagination;
 
-        const [countRows] = await db.query(
-            `
+    const [countRows] = await db.query(
+      `
             SELECT COUNT(*) AS total
             FROM dang_ky_lop dk
             JOIN thoi_khoa_bieu tkb ON dk.lop_mon_hoc_id = tkb.lop_mon_hoc_id
@@ -314,11 +386,11 @@ class StudentModel {
             WHERE dk.sinh_vien_id = ?
             AND lmh.deleted_at IS NULL
             `,
-            [id]
-        );
+      [id],
+    );
 
-        const [rows] = await db.query(
-            `
+    const [rows] = await db.query(
+      `
             SELECT
                 tkb.id,
                 tkb.thu,
@@ -343,43 +415,43 @@ class StudentModel {
             ORDER BY tkb.thu ASC, tkb.gio_bat_dau ASC
             LIMIT ? OFFSET ?
             `,
-            [id, limit, offset]
-        );
+      [id, limit, offset],
+    );
 
-        return pagingData(rows, countRows[0].total, page, limit);
-    }
+    return pagingData(rows, countRows[0].total, page, limit);
+  }
 
-    static async getStudentAttendance(id, query, pagination) {
-        const { page, limit, offset } = pagination;
+  static async getStudentAttendance(id, query, pagination) {
+    const { page, limit, offset } = pagination;
 
-        let whereSql = `
+    let whereSql = `
             WHERE dd.sinh_vien_id = ?
         `;
 
-        const params = [id];
+    const params = [id];
 
-        if (query.lop_mon_hoc_id) {
-            whereSql += ` AND bh.lop_mon_hoc_id = ? `;
-            params.push(query.lop_mon_hoc_id);
-        }
+    if (query.lop_mon_hoc_id) {
+      whereSql += ` AND bh.lop_mon_hoc_id = ? `;
+      params.push(query.lop_mon_hoc_id);
+    }
 
-        if (query.trang_thai) {
-            whereSql += ` AND dd.trang_thai = ? `;
-            params.push(query.trang_thai);
-        }
+    if (query.trang_thai) {
+      whereSql += ` AND dd.trang_thai = ? `;
+      params.push(query.trang_thai);
+    }
 
-        const [countRows] = await db.query(
-            `
+    const [countRows] = await db.query(
+      `
             SELECT COUNT(*) AS total
             FROM diem_danh dd
             JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id
             ${whereSql}
             `,
-            params
-        );
+      params,
+    );
 
-        const [rows] = await db.query(
-            `
+    const [rows] = await db.query(
+      `
             SELECT
                 dd.id,
                 dd.buoi_hoc_id,
@@ -405,15 +477,15 @@ class StudentModel {
             ORDER BY bh.ngay_hoc DESC, bh.gio_bat_dau DESC
             LIMIT ? OFFSET ?
             `,
-            [...params, limit, offset]
-        );
+      [...params, limit, offset],
+    );
 
-        return pagingData(rows, countRows[0].total, page, limit);
-    }
+    return pagingData(rows, countRows[0].total, page, limit);
+  }
 
-    static async getStudentStatistics(id) {
-        const [summary] = await db.query(
-            `
+  static async getStudentStatistics(id) {
+    const [summary] = await db.query(
+      `
             SELECT
                 tk.sinh_vien_id,
                 tk.lop_mon_hoc_id,
@@ -443,11 +515,11 @@ class StudentModel {
             LEFT JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
             WHERE tk.sinh_vien_id = ?
             `,
-            [id]
-        );
+      [id],
+    );
 
-        const [weekly] = await db.query(
-            `
+    const [weekly] = await db.query(
+      `
             SELECT
                 cct.sinh_vien_id,
                 cct.lop_mon_hoc_id,
@@ -482,14 +554,14 @@ class StudentModel {
             WHERE cct.sinh_vien_id = ?
             ORDER BY cct.tuan_hoc ASC
             `,
-            [id]
-        );
+      [id],
+    );
 
-        return {
-            summary,
-            weekly
-        };
-    }
+    return {
+      summary,
+      weekly,
+    };
+  }
 }
 
 module.exports = StudentModel;

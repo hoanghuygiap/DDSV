@@ -1,5 +1,6 @@
 const WarningModel = require('../models/warningModel');
 
+
 class WarningService {
     static async getAll(query) {
         const page = Number(query.page) || 1;
@@ -100,6 +101,7 @@ class WarningService {
 
                 if (!existed) {
                     const warning = await WarningModel.create({
+                        
                         sinh_vien_id: student.sinh_vien_id,
                         lop_mon_hoc_id: course_class_id,
                         loai: 'auto_absent',

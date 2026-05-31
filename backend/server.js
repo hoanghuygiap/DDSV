@@ -22,6 +22,7 @@ const notificationRoutes = require('./routes/notificationRoutes');//quản lý t
 const warningRoutes = require('./routes/warningRoutes');//quản lý cảnh báo
 const reportRoutes = require('./routes/reportRoutes');//quản lý báo cáo
 const deviceRoutes = require('./routes/deviceRoutes');//quản lý thiết bị
+const dashboardRoutes = require('./routes/dashboardRoutes');//quản lý dashboard
 const app = express();
 
 // Middlewares
@@ -50,6 +51,7 @@ app.use('/notifications', notificationRoutes);
 app.use('/warnings', warningRoutes);
 app.use('/reports', reportRoutes);
 app.use('/devices', deviceRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 
 
