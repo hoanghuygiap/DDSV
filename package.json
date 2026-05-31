@@ -16,7 +16,11 @@
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+<<<<<<< HEAD
     "jsqr": "^1.4.0",
+=======
+    "html5-qrcode": "^2.3.8",
+>>>>>>> a2b1105b1d658885a21451b833f53a2092c7b509
     "lucide-react": "^1.14.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.6",

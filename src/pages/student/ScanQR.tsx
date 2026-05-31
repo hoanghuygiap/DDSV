@@ -19,22 +19,22 @@ interface ScanResult {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ScanQR() {
-  const videoRef   = useRef<HTMLVideoElement>(null)
-  const canvasRef  = useRef<HTMLCanvasElement>(null)
-  const streamRef  = useRef<MediaStream | null>(null)
-  const rafRef     = useRef<number>(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const rafRef = useRef<number>(0)
 
-  const [scanState,   setScanState]   = useState<ScanState>("idle")
-  const [errorMsg,    setErrorMsg]    = useState("")
-  const [result,      setResult]      = useState<ScanResult | null>(null)
-  const [cameraErr,   setCameraErr]   = useState("")
-  const [geoLoading,  setGeoLoading]  = useState(false)
-  const [coords,      setCoords]      = useState<{ lat: number; lng: number } | null>(null)
+  const [scanState, setScanState] = useState<ScanState>("idle")
+  const [errorMsg, setErrorMsg] = useState("")
+  const [result, setResult] = useState<ScanResult | null>(null)
+  const [cameraErr, setCameraErr] = useState("")
+  const [geoLoading, setGeoLoading] = useState(false)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
 
   // Manual input
-  const [showManual,  setShowManual]  = useState(false)
+  const [showManual, setShowManual] = useState(false)
   const [manualToken, setManualToken] = useState("")
-  const [manualSid,   setManualSid]   = useState("")
+  const [manualSid, setManualSid] = useState("")
 
   // ── Get GPS once on mount ──────────────────────────────────────────────────
   useEffect(() => {
@@ -85,11 +85,11 @@ export default function ScanQR() {
   }
 
   function tick() {
-    const video  = videoRef.current
+    const video = videoRef.current
     const canvas = canvasRef.current
     if (!video || !canvas || video.readyState < 2) { requestFrame(); return }
 
-    canvas.width  = video.videoWidth
+    canvas.width = video.videoWidth
     canvas.height = video.videoHeight
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!
     ctx.drawImage(video, 0, 0)
@@ -114,7 +114,7 @@ export default function ScanQR() {
     let token: string, session_id: number
     try {
       const payload = JSON.parse(raw)
-      token      = payload.token
+      token = payload.token
       session_id = payload.session_id
       if (!token || !session_id) throw new Error()
     } catch {
@@ -133,7 +133,7 @@ export default function ScanQR() {
     try {
       const body: Record<string, unknown> = { token, session_id }
       if (coords) {
-        body.latitude  = coords.lat
+        body.latitude = coords.lat
         body.longitude = coords.lng
       }
       const res = await api.post("/qr/scan", body)
@@ -313,8 +313,8 @@ export default function ScanQR() {
           {geoLoading
             ? "Đang lấy vị trí GPS..."
             : coords
-            ? `GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`
-            : "Không lấy được GPS — điểm danh vẫn hoạt động nếu buổi học không yêu cầu"}
+              ? `GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`
+              : "Không lấy được GPS — điểm danh vẫn hoạt động nếu buổi học không yêu cầu"}
         </div>
       </div>
 
@@ -373,6 +373,7 @@ export default function ScanQR() {
         </p>
       </div>
 
+      {/* OVERRIDE CSS CHO HTML5-QRCODE */}
       <style>{`
         @keyframes scanline {
           0%   { top: 8px; }
