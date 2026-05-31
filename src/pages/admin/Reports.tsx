@@ -57,7 +57,6 @@ function StatusBadge({ rate }: { rate: number }) {
     )
 }
 
-// Nhóm dữ liệu weekly theo tháng để vẽ biểu đồ
 function groupByMonth(rows: WeeklyRow[]) {
     const map: Record<string, { total: number; co_mat: number }> = {}
     rows.forEach(r => {
@@ -117,7 +116,6 @@ export default function ReportsPage() {
         return () => { cancelled = true }
     }, [])
 
-    // Tính toán summary từ dữ liệu có sẵn (Number() để tránh string concat từ MySQL)
     const totalAttendance = classData.reduce((s, r) => s + (Number(r.tong_luot_diem_danh) || 0), 0)
     const totalPresent    = classData.reduce((s, r) => s + (Number(r.co_mat) || 0), 0)
     const attendanceRate  = totalAttendance > 0
