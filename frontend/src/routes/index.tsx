@@ -18,13 +18,10 @@ import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
 import MyClassesPage from "@/pages/lecturer/MyClasses"
 import ClassDetailPage from "@/pages/lecturer/ClassDetail"
 import LiveAttendanceQRPage from "@/pages/lecturer/LiveAttendanceQR"
-<<<<<<< Updated upstream
 import ClassReportPage from "@/pages/lecturer/ClassReport"
 import StudentReportPage from "@/pages/student/StudentReport"
 import StudentSchedulePage from "@/pages/student/StudentSchedule"
-=======
 import ScanQRPage from "@/pages/student/ScanQR"
->>>>>>> Stashed changes
 
 export const router = createBrowserRouter([
   {
