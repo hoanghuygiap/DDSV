@@ -67,9 +67,9 @@ export const StudentService = {
     filters?: { khoa_id?: number | ""; nganh_id?: number | ""; lop_id?: number | ""; kich_hoat?: "true" | "false" | "" }
   ) => {
     const params: Record<string, string | number> = { page, limit, keyword }
-    if (filters?.khoa_id)  params.khoa_id  = filters.khoa_id
+    if (filters?.khoa_id) params.khoa_id = filters.khoa_id
     if (filters?.nganh_id) params.nganh_id = filters.nganh_id
-    if (filters?.lop_id)   params.lop_id   = filters.lop_id
+    if (filters?.lop_id) params.lop_id = filters.lop_id
     if (filters?.kich_hoat !== undefined && filters.kich_hoat !== "") params.kich_hoat = filters.kich_hoat
     const res = await api.get("/students", { params })
     return res.data as { data: StudentListItem[]; pagination: StudentPagination }
@@ -94,5 +94,13 @@ export const StudentService = {
   getClassesById: async (id: number) => {
     const res = await api.get(`/students/${id}/classes`)
     return res.data as { data: StudentClass[]; pagination: StudentPagination }
+  },
+
+  getStudentIdByTaiKhoanId: async (taiKhoanId: number, keyword: string) => {
+    // Gọi API list để tìm kiếm
+    const res = await api.get("/students", { params: { limit: 10, keyword } })
+    const data = res.data.data as StudentListItem[]
+    const student = data.find(s => s.tai_khoan_id === taiKhoanId)
+    return student ? student.id : null
   },
 }

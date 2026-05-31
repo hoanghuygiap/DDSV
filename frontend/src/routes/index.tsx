@@ -18,9 +18,13 @@ import LecturerSchedulePage from "@/pages/lecturer/LecturerSchedule"
 import MyClassesPage from "@/pages/lecturer/MyClasses"
 import ClassDetailPage from "@/pages/lecturer/ClassDetail"
 import LiveAttendanceQRPage from "@/pages/lecturer/LiveAttendanceQR"
+<<<<<<< Updated upstream
 import ClassReportPage from "@/pages/lecturer/ClassReport"
 import StudentReportPage from "@/pages/student/StudentReport"
 import StudentSchedulePage from "@/pages/student/StudentSchedule"
+=======
+import ScanQRPage from "@/pages/student/ScanQR"
+>>>>>>> Stashed changes
 
 export const router = createBrowserRouter([
   {
@@ -103,6 +107,12 @@ export const router = createBrowserRouter([
       {
         path: "student-schedule",
         element: <RoleGuard allowed={["student"]}><StudentSchedulePage /></RoleGuard>,
+      },
+
+      // ── Student only ───────────────────────────────────────────
+      {
+        path: "scan-qr",
+        element: <RoleGuard allowed={["student"]}><ScanQRPage /></RoleGuard>,
       },
 
       // ── Shared (all roles) ─────────────────────────────────────
