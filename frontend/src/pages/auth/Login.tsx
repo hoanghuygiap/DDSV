@@ -23,7 +23,15 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       await login(username, password)
-      navigate("/dashboard", { replace: true })
+      const pendingToken = sessionStorage.getItem("pending_qr_token")
+      const pendingSid = sessionStorage.getItem("pending_qr_session_id")
+      if (pendingToken && pendingSid) {
+        sessionStorage.removeItem("pending_qr_token")
+        sessionStorage.removeItem("pending_qr_session_id")
+        navigate(`/dashboard/scan-qr?token=${encodeURIComponent(pendingToken)}&session_id=${pendingSid}`, { replace: true })
+      } else {
+        navigate("/dashboard", { replace: true })
+      }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||

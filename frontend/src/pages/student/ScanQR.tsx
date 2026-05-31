@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import jsQR from "jsqr"
 import {
   Camera, CameraOff, CheckCircle2, AlertTriangle,
@@ -19,6 +20,8 @@ interface ScanResult {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ScanQR() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -35,6 +38,27 @@ export default function ScanQR() {
   const [showManual, setShowManual] = useState(false)
   const [manualToken, setManualToken] = useState("")
   const [manualSid, setManualSid] = useState("")
+
+  // Public form (không cần đăng nhập)
+  const [publicForm, setPublicForm] = useState<{ token: string; session_id: number } | null>(null)
+  const [publicMaSv, setPublicMaSv] = useState("")
+
+  // ── Auto-submit when opened via QR camera scan ────────────────────────────
+  useEffect(() => {
+    const token = searchParams.get("token")
+    const sid = searchParams.get("session_id")
+    if (!token || !sid) return
+
+    setSearchParams({}, { replace: true })
+
+    if (localStorage.getItem("access_token")) {
+      // Đã đăng nhập — submit luôn bằng JWT
+      submitAttendance(token, parseInt(sid))
+    } else {
+      // Chưa đăng nhập — hiện form nhập mã sinh viên
+      setPublicForm({ token, session_id: parseInt(sid) })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Get GPS once on mount ──────────────────────────────────────────────────
   useEffect(() => {
@@ -145,6 +169,28 @@ export default function ScanQR() {
     }
   }
 
+  // ── Public submit (không cần đăng nhập) ───────────────────────────────────
+  async function handlePublicSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!publicForm || !publicMaSv.trim()) return
+    setScanState("processing")
+    setErrorMsg("")
+    try {
+      const body: Record<string, unknown> = {
+        token: publicForm.token,
+        session_id: publicForm.session_id,
+        ma_sinh_vien: publicMaSv.trim(),
+      }
+      if (coords) { body.latitude = coords.lat; body.longitude = coords.lng }
+      const res = await api.post("/qr/scan-public", body)
+      setResult(res.data.data)
+      setScanState("success")
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || "Điểm danh thất bại. Vui lòng thử lại.")
+      setScanState("error")
+    }
+  }
+
   // ── Manual submit ─────────────────────────────────────────────────────────
   async function handleManualSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -172,6 +218,42 @@ export default function ScanQR() {
         <h1 className="text-[22px] font-medium text-[#185FA5]">Quét mã QR điểm danh</h1>
         <p className="text-sm text-slate-500 mt-0.5">Quét mã QR do giảng viên hiển thị để ghi nhận điểm danh</p>
       </div>
+
+      {/* PUBLIC FORM — hiện khi quét QR bằng camera native mà chưa đăng nhập */}
+      {publicForm && scanState === "idle" && (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={20} className="text-[#185FA5]" />
+            </div>
+            <div>
+              <p className="font-medium text-slate-800">QR hợp lệ — xác nhận danh tính</p>
+              <p className="text-xs text-slate-500">Nhập mã sinh viên để ghi nhận điểm danh</p>
+            </div>
+          </div>
+
+          <form onSubmit={handlePublicSubmit} className="flex flex-col gap-3 mt-5">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600">Mã sinh viên</label>
+              <input
+                type="text"
+                value={publicMaSv}
+                onChange={e => setPublicMaSv(e.target.value)}
+                placeholder="Ví dụ: SV001"
+                autoFocus
+                className="h-11 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5]"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!publicMaSv.trim()}
+              className="h-11 bg-[#185FA5] hover:bg-[#1254a0] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Điểm danh
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* CAMERA CARD */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -241,7 +323,6 @@ export default function ScanQR() {
                   {result.trang_thai === "co_mat" ? "Có mặt đúng giờ" : "Ghi nhận đi trễ"}
                 </p>
               </div>
-              {/* GPS / WiFi indicators */}
               <div className="flex gap-3">
                 <span className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium ${result.hop_le_gps ? "bg-emerald-600 text-white" : "bg-slate-600 text-slate-300"}`}>
                   <MapPin size={11} /> GPS {result.hop_le_gps ? "hợp lệ" : "không kiểm tra"}

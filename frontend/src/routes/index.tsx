@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom"
 import { RoleGuard } from "@/components/RoleGuard"
 import LoginPage from "@/pages/auth/Login"
+import AttendPublicPage from "@/pages/AttendPublic"
 
 import ForgotPasswordPage from "@/pages/auth/ForgotPassword"
 import DashboardLayout from "@/layout/DashboardLayout"
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/attend",
+    element: <AttendPublicPage />,
   },
 
   {
