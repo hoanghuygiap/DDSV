@@ -72,6 +72,14 @@ class QrModel {
         return rows[0];
     }
 
+    static async getStudentByMaSinhVien(maSinhVien) {
+        const [rows] = await db.query(
+            `SELECT * FROM sinh_vien WHERE ma_sinh_vien = ? AND deleted_at IS NULL`,
+            [maSinhVien]
+        );
+        return rows[0];
+    }
+
     static async checkStudentInClass(studentId, sessionId) {
         const [rows] = await db.query(`
             SELECT dk.*

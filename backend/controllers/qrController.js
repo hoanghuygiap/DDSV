@@ -69,6 +69,22 @@ class QrController {
         }
     }
 
+    static async scanPublic(req, res) {
+        try {
+            const data = await QrService.scanQrPublic(req.body, req);
+            return res.status(201).json({
+                success: true,
+                message: 'Điểm danh thành công',
+                data
+            });
+        } catch (error) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
     static async history(req, res) {
         try {
             const data = await QrService.getHistory(req.params.sessionId);

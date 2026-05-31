@@ -236,6 +236,7 @@ class DashboardModel {
         `, [sinhVienId]);
 
         return {
+            sinh_vien_id: sinhVienId,
             summary: {
                 total_sessions: summary.total_sessions || 0,
                 co_mat: summary.co_mat || 0,

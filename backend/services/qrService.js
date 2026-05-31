@@ -93,6 +93,7 @@ class QrService {
             longitude,
             wifi_bssid
         } = body;
+        const deviceId = (req.headers['user-agent'] || '').slice(0, 100);
 
         if (!token || !session_id) {
             throw new Error('Thiếu token hoặc session_id');
@@ -113,7 +114,7 @@ class QrService {
                 thanhCong: false,
                 lyDoFail: 'NOT_STUDENT',
                 ip: req.ip,
-                deviceId: req.headers['user-agent']
+                deviceId
             });
 
             throw new Error('Tài khoản không phải sinh viên');
@@ -134,7 +135,7 @@ class QrService {
                 thanhCong: false,
                 lyDoFail: 'NOT_IN_CLASS',
                 ip: req.ip,
-                deviceId: req.headers['user-agent']
+                deviceId
             });
 
             throw new Error('Sinh viên không thuộc lớp môn học này');
@@ -179,7 +180,7 @@ class QrService {
             wifiBssid: wifi_bssid,
             hopLeWifi,
             hopLe,
-            deviceId: req.headers['user-agent'],
+            deviceId,
             ip: req.ip
         });
 
@@ -188,7 +189,113 @@ class QrService {
             studentId: student.id,
             thanhCong: true,
             ip: req.ip,
-            deviceId: req.headers['user-agent']
+            deviceId
+        });
+
+        return {
+            attendance_id: attendanceId,
+            sinh_vien_id: student.id,
+            hop_le_gps: hopLeGps,
+            hop_le_wifi: hopLeWifi,
+            hop_le: hopLe,
+            trang_thai: hopLe ? 'co_mat' : 'tre'
+        };
+    }
+
+    static async scanQrPublic(body, req) {
+        const { token, session_id, ma_sinh_vien, latitude, longitude, wifi_bssid } = body;
+        const deviceId = (req.headers['user-agent'] || '').slice(0, 100);
+
+        if (!token || !session_id || !ma_sinh_vien) {
+            throw new Error('Thiếu token, session_id hoặc mã sinh viên');
+        }
+
+        const tokenHash = hashToken(token);
+        const qr = await QrModel.findQrByTokenHash(tokenHash, session_id);
+
+        if (!qr) {
+            throw new Error('QR không hợp lệ hoặc đã hết hạn');
+        }
+
+        const student = await QrModel.getStudentByMaSinhVien(ma_sinh_vien);
+
+        if (!student) {
+            await QrModel.logScan({
+                qrTokenId: qr.id,
+                thanhCong: false,
+                lyDoFail: 'NOT_FOUND',
+                ip: req.ip,
+                deviceId
+            });
+            throw new Error('Mã sinh viên không tồn tại');
+        }
+
+        const session = await QrModel.getSessionById(session_id);
+
+        if (!session || !session.diem_danh_mo) {
+            throw new Error('Buổi học chưa mở điểm danh');
+        }
+
+        const inClass = await QrModel.checkStudentInClass(student.id, session_id);
+
+        if (!inClass) {
+            await QrModel.logScan({
+                qrTokenId: qr.id,
+                studentId: student.id,
+                thanhCong: false,
+                lyDoFail: 'NOT_IN_CLASS',
+                ip: req.ip,
+                deviceId
+            });
+            throw new Error('Sinh viên không thuộc lớp môn học này');
+        }
+
+        let hopLeGps = true;
+        let hopLeWifi = true;
+
+        if (session.require_gps) {
+            if (!latitude || !longitude || !session.latitude || !session.longitude) {
+                hopLeGps = false;
+            } else {
+                const distance = calcDistanceMeters(
+                    Number(latitude), Number(longitude),
+                    Number(session.latitude), Number(session.longitude)
+                );
+                hopLeGps = distance <= Number(session.ban_kinh_gps_m || 50);
+            }
+        }
+
+        if (session.require_wifi) {
+            if (!wifi_bssid || !session.phong_hoc_id) {
+                hopLeWifi = false;
+            } else {
+                const wifi = await QrModel.checkWifi(session.phong_hoc_id, wifi_bssid);
+                hopLeWifi = !!wifi;
+            }
+        }
+
+        const hopLe = hopLeGps && hopLeWifi;
+
+        const attendanceId = await QrModel.createAttendance({
+            sessionId: session_id,
+            studentId: student.id,
+            trangThai: hopLe ? 'co_mat' : 'tre',
+            latitude,
+            longitude,
+            hopLeGps,
+            wifiBssid: wifi_bssid,
+            hopLeWifi,
+            hopLe,
+            deviceId,
+            ip: req.ip
+        });
+
+        await QrModel.logScan({
+            qrTokenId: qr.id,
+            studentId: student.id,
+            thanhCong: true,
+            ip: req.ip,
+            deviceId
         });
 
         return {

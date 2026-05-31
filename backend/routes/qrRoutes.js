@@ -9,6 +9,7 @@ router.post('/generate', authMiddleware, QrController.generate);
 router.get('/current/:sessionId', authMiddleware, QrController.getCurrent);
 
 router.post('/scan', authMiddleware, QrController.scan);
+router.post('/scan-public', QrController.scanPublic);
 
 router.post('/refresh', authMiddleware, QrController.refresh);
 

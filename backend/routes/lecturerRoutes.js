@@ -13,14 +13,14 @@ const {
 router.get(
     '/',
     authMiddleware,
-    requirePermission('user.view'),
+    requirePermission('lecturer.view'),
     LecturerController.getAllLecturers
 );
 
 router.get(
     '/:id',
     authMiddleware,
-    requirePermission('user.view'),
+    requirePermission('lecturer.view'),
     LecturerController.getLecturerById
 );
 
