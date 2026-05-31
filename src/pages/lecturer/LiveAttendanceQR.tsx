@@ -1,8 +1,29 @@
 import { useState, useEffect, useRef } from "react"
 import { useSearchParams, Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, RefreshCcw, Wifi, MapPin, StopCircle, UserCheck, Play, Loader2, Bug } from "lucide-react"
+import { ArrowLeft, RefreshCcw, Wifi, MapPin, StopCircle, Play, Loader2 } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import api from "@/api/axios"
+
+async function detectLanIP(): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [] })
+      pc.createDataChannel("")
+      pc.createOffer().then(o => pc.setLocalDescription(o))
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) { resolve(null); return }
+        const match = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate)
+        if (match && !match[1].startsWith("127.")) {
+          pc.close()
+          resolve(match[1])
+        }
+      }
+      setTimeout(() => { pc.close(); resolve(null) }, 3000)
+    } catch {
+      resolve(null)
+    }
+  })
+}
 
 export default function LiveAttendanceQR() {
   const [searchParams] = useSearchParams()
@@ -13,9 +34,13 @@ export default function LiveAttendanceQR() {
   const [qrToken, setQrToken] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState(15)
   const [isLive, setIsLive] = useState(false)
+  const [lanIP, setLanIP] = useState<string | null>(null)
 
-  const [studentsHistory, setStudentsHistory] = useState<any[]>([])
   const [loadingAction, setLoadingAction] = useState(false)
+
+  useEffect(() => {
+    detectLanIP().then(setLanIP)
+  }, [])
 
   // Fetch session init info
   useEffect(() => {
@@ -37,40 +62,21 @@ export default function LiveAttendanceQR() {
     let localTimer = 15;
     setTimeLeft(15);
 
-    // Call Immediately to get the very first list and fresh QR (nếu chưa có)
-    if (!qrToken) {
-      handleRefreshQR();
-    }
-    fetchRealtime();
+    if (!qrToken) handleRefreshQR();
 
     const interval = setInterval(() => {
       localTimer -= 1;
       if (localTimer <= 0) {
         localTimer = 15;
-        // Refresh QR
         handleRefreshQR();
       }
       setTimeLeft(localTimer);
-
-      // Polling Realtime data every 2 seconds
-      if (localTimer % 2 === 0) {
-        fetchRealtime();
-      }
     }, 1000)
 
     return () => clearInterval(interval)
   }, [isLive, sessionId])
 
-  const fetchRealtime = async () => {
-    try {
-      const res = await api.get(`/attendance/realtime/${sessionId}`)
-      setStudentsHistory(res.data.data || [])
-    } catch (err) {
-      console.error("Lỗi Realtime Polling:", err)
-    }
-  }
-
-  const handleRefreshQR = async () => {
+const handleRefreshQR = async () => {
     try {
       const res = await api.post("/qr/refresh", {
         session_id: Number(sessionId),
@@ -117,7 +123,13 @@ export default function LiveAttendanceQR() {
 
   if (!sessionInfo) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-slate-400" /></div>
 
-  const qrPayload = JSON.stringify({ token: qrToken, session_id: Number(sessionId) })
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  const baseUrl = isLocalhost && lanIP
+    ? `http://${lanIP}:${window.location.port || "5173"}`
+    : window.location.origin
+  const qrPayload = qrToken
+    ? `${baseUrl}/attend?token=${encodeURIComponent(qrToken)}&session_id=${sessionId}`
+    : ""
 
   return (
     <div className="flex flex-col gap-6 w-full pb-8 h-[calc(100vh-80px)]">
@@ -177,7 +189,7 @@ export default function LiveAttendanceQR() {
         )}
       </div>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-1 gap-6 min-h-0">
 
         {/* QR SECTION */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col items-center justify-center p-8 relative overflow-hidden">
@@ -246,60 +258,6 @@ export default function LiveAttendanceQR() {
           </div>
         </div>
 
-        {/* LIVE STATS & RECENT LOGS */}
-        <div className="lg:col-span-1 flex flex-col gap-6 h-full min-h-0">
-
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 shrink-0 relative overflow-hidden">
-            {isLive && <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500 animate-pulse"></div>}
-            <h3 className="font-medium text-[#185FA5] text-lg mb-4 flex justify-between items-center">
-              Tiến độ kiểm diện
-              {isLive && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></div> Realtime</span>}
-            </h3>
-
-            <div className="flex items-end justify-between mb-2">
-              <span className="text-4xl font-medium text-[#185FA5]">{studentsHistory.length}</span>
-              <span className="text-slate-500 font-medium mb-1">Đã Check-in</span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm text-[#185FA5] font-medium bg-blue-50 p-3 rounded-lg border border-blue-100 mt-4">
-              <UserCheck size={18} />
-              Dữ liệu được làm mới liên tục.
-            </div>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="font-medium text-[#185FA5] text-base">Check-in gần nhất</h3>
-            </div>
-
-            <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-3">
-              {studentsHistory.map((sv, i) => (
-                <div key={i} className={`flex items-center justify-between p-3 border rounded-lg animate-in fade-in slide-in-from-right-4 duration-300 ${sv.trang_thai === 'tre' ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50/50'}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium text-xs shrink-0 ${sv.trang_thai === 'tre' ? 'bg-amber-200 text-amber-700' : 'bg-emerald-100 text-emerald-600'}`}>
-                      {sv.trang_thai === 'tre' ? 'TRỄ' : <UserCheck size={14} />}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-800">{sv.student_name}</h4>
-                      <p className="text-xs text-slate-500">Mã SV: {sv.sinh_vien_id}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-400">
-                    {new Date(sv.checked_in_at).toLocaleTimeString('vi-VN')}
-                  </span>
-                </div>
-              ))}
-
-              {studentsHistory.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center bg-slate-50/50 rounded-lg border border-dashed border-slate-200 mt-2">
-                  <UserCheck size={40} className="mb-3 opacity-30" />
-                  <p className="font-medium text-sm">Chưa có ai check-in cho đến hiện tại.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
 
       </div>
 
