@@ -1,225 +1,598 @@
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
-  Clock, MapPin, Edit3, Power, Users, UserCheck, AlertTriangle,
-  ShieldCheck, Search, CheckCircle2, MapPinOff, QrCode
+  ChevronLeft, ChevronRight, Loader2,
+  ChevronsLeft, ChevronsRight, Calendar,
+  Clock, MapPin, Radio, Filter, X, CheckCircle2,
 } from "lucide-react"
-import { mockLiveStudents } from "../../mocks/liveAttendance.mock"
+import api from "@/api/axios"
 
+// ─── Types ─────────────────────────────────────────────────────────────────────
+interface Session {
+  id: number
+  lop_mon_hoc_id: number
+  ngay_hoc: string
+  gio_bat_dau: string
+  gio_ket_thuc: string
+  trang_thai: "sap_dien_ra" | "dang_dien_ra" | "da_ket_thuc" | "huy"
+  diem_danh_mo: boolean
+  ma_lop: string
+  ten_hoc_phan: string | null
+  ten_phong: string | null
+}
+
+interface Pagination {
+  total: number; page: number; limit: number; totalPages: number
+}
+
+interface Lecturer {
+  id: number
+  ho_ten: string
+  ma_giang_vien: string
+}
+
+interface Semester {
+  id: number
+  ten_ky: string
+  bat_dau: string
+  ket_thuc: string
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 20
+
+function normalizeLecturerSession(s: Record<string, unknown>): Session {
+  return {
+    id: s.buoi_hoc_id as number,
+    lop_mon_hoc_id: s.lop_mon_hoc_id as number,
+    ngay_hoc: s.ngay_hoc as string,
+    gio_bat_dau: s.gio_bat_dau as string,
+    gio_ket_thuc: s.gio_ket_thuc as string,
+    trang_thai: s.trang_thai as Session["trang_thai"],
+    diem_danh_mo: (s.diem_danh_mo as boolean) ?? false,
+    ma_lop: s.ma_lop as string,
+    ten_hoc_phan: s.ten_hoc_phan as string | null,
+    ten_phong: s.ten_phong as string | null,
+  }
+}
+
+function isoDate(ngay: string): string {
+  return (ngay ?? "").slice(0, 10)
+}
+
+function parseSessionDate(ngay_hoc: string): Date {
+  const d = isoDate(ngay_hoc)
+  const [y, m, day] = d.split("-").map(Number)
+  return new Date(y, m - 1, day)
+}
+
+function fmtDate(d: Date) {
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`
+}
+
+function toIso(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+const todayIso = toIso(new Date())
+
+const STATUS_DOT: Record<string, string> = {
+  sap_dien_ra:  "bg-slate-400",
+  dang_dien_ra: "bg-blue-500 animate-pulse",
+  da_ket_thuc:  "bg-green-500",
+  huy:          "bg-red-400",
+}
+
+function statusLabel(t: string) {
+  return t === "sap_dien_ra"  ? "Sắp diễn ra"
+       : t === "dang_dien_ra" ? "Đang diễn ra"
+       : t === "da_ket_thuc"  ? "Đã kết thúc"
+       : "Đã hủy"
+}
+
+function sortByProximity(data: Session[]) {
+  const now = Date.now()
+  data.sort((a, b) => {
+    const da = Math.abs(parseSessionDate(a.ngay_hoc).getTime() - now)
+    const db = Math.abs(parseSessionDate(b.ngay_hoc).getTime() - now)
+    return da - db || a.gio_bat_dau.localeCompare(b.gio_bat_dau)
+  })
+}
+
+type AppliedFilters = { date: string; lecturerId: string; semesterId: string; status: string }
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function SchedulePage() {
+
+  // ── Filter inputs (controlled) ─────────────────────────────────────────────
+  const [filterDate,       setFilterDate]       = useState("")
+  const [filterLecturerId, setFilterLecturerId] = useState("")
+  const [filterSemesterId, setFilterSemesterId] = useState("")
+  const [filterStatus,     setFilterStatus]     = useState("")
+
+  // Snapshot of applied filters (updated on "Lọc" click)
+  const [applied, setApplied] = useState<AppliedFilters>({
+    date: "", lecturerId: "", semesterId: "", status: "",
+  })
+
+  // ── Reference data ─────────────────────────────────────────────────────────
+  const [lecturers, setLecturers] = useState<Lecturer[]>([])
+  const [semesters, setSemesters] = useState<Semester[]>([])
+  const semRef = useRef<Semester[]>([])  // always-fresh ref for loadSessions closure
+
+  // ── Session data ───────────────────────────────────────────────────────────
+  const [sessions,    setSessions]    = useState<Session[]>([])   // server-side page
+  const [clientData,  setClientData]  = useState<Session[]>([])   // full client dataset
+  const [pagination,  setPagination]  = useState<Pagination>({
+    total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1,
+  })
+  const [page,    setPage]    = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState("")
+
+  // ── Load reference data on mount ───────────────────────────────────────────
+  useEffect(() => {
+    Promise.all([
+      api.get("/lecturers").catch(() => ({ data: [] })),
+      api.get("/semesters").catch(() => ({ data: { data: [] } })),
+    ]).then(([lvRes, semRes]) => {
+      const lvData: Lecturer[] = Array.isArray(lvRes.data)
+        ? lvRes.data
+        : (lvRes.data?.data ?? [])
+      const semData: Semester[] = semRes.data?.data ?? []
+      setLecturers(lvData)
+      setSemesters(semData)
+      semRef.current = semData
+    })
+  }, [])
+
+  // Keep ref in sync with state
+  useEffect(() => { semRef.current = semesters }, [semesters])
+
+  // ── Load sessions whenever applied filters or page change ──────────────────
+  useEffect(() => {
+    loadSessions(applied, page)
+  }, [applied, page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadSessions(appl: AppliedFilters, pg: number) {
+    setLoading(true)
+    setError("")
+
+    try {
+      const { date, lecturerId, semesterId, status } = appl
+      const semester = semesterId
+        ? semRef.current.find(s => String(s.id) === semesterId)
+        : null
+
+      // ── CLIENT MODE: lecturer or semester selected ──────────────────────────
+      // Fetch full dataset, then apply all active filters locally
+      if (lecturerId !== "" || semesterId !== "") {
+        let data: Session[]
+
+        if (lecturerId !== "") {
+          const res = await api.get(`/lecturers/${lecturerId}/schedule`)
+          data = (res.data?.data ?? []).map(normalizeLecturerSession)
+        } else {
+          const res = await api.get("/sessions", { params: { limit: 1000, page: 1 } })
+          data = res.data?.data ?? []
+        }
+
+        if (date) {
+          data = data.filter(s => isoDate(s.ngay_hoc) === date)
+        }
+        if (semester) {
+          const batDau  = isoDate(semester.bat_dau)
+          const ketThuc = isoDate(semester.ket_thuc)
+          data = data.filter(s => {
+            const d = isoDate(s.ngay_hoc)
+            return d >= batDau && d <= ketThuc
+          })
+        }
+        if (status) {
+          data = data.filter(s => s.trang_thai === status)
+        }
+
+        sortByProximity(data)
+        setClientData(data)
+        setSessions([])
+        return
+      }
+
+      // ── SERVER MODE: only date/status (or no filters) ───────────────────────
+      const params: Record<string, string | number> = { page: pg, limit: PAGE_SIZE }
+      if (date)   params.date   = date
+      if (status) params.status = status
+
+      const res = await api.get("/sessions", { params })
+      const data: Session[] = res.data?.data ?? []
+      sortByProximity(data)
+
+      setSessions(data)
+      setPagination(
+        res.data?.pagination ?? { total: data.length, page: pg, limit: PAGE_SIZE, totalPages: 1 }
+      )
+      setClientData([])
+
+    } catch {
+      setError("Không thể tải danh sách buổi học.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ── Is client-side pagination mode? ───────────────────────────────────────
+  const isClientMode = applied.lecturerId !== "" || applied.semesterId !== ""
+
+  // ── Client page slice ──────────────────────────────────────────────────────
+  const clientPageData = useMemo(() => {
+    if (!isClientMode) return []
+    const start = (page - 1) * PAGE_SIZE
+    return clientData.slice(start, start + PAGE_SIZE)
+  }, [isClientMode, clientData, page])
+
+  const displaySessions = isClientMode ? clientPageData : sessions
+  const totalCount  = isClientMode ? clientData.length  : pagination.total
+  const totalPages  = isClientMode
+    ? Math.max(1, Math.ceil(clientData.length / PAGE_SIZE))
+    : pagination.totalPages
+
+  // ── Stats (client mode = full filtered dataset; server mode = current page) ─
+  const statsData     = isClientMode ? clientData : sessions
+  const liveCount     = statsData.filter(s => s.trang_thai === "dang_dien_ra").length
+  const upcomingCount = statsData.filter(s => s.trang_thai === "sap_dien_ra").length
+  const doneCount     = statsData.filter(s => s.trang_thai === "da_ket_thuc").length
+
+  // ── Filter helpers ─────────────────────────────────────────────────────────
+  const hasApplied    = applied.date !== "" || applied.lecturerId !== "" || applied.semesterId !== "" || applied.status !== ""
+  const hasInputDirty = filterDate !== applied.date
+    || filterLecturerId !== applied.lecturerId
+    || filterSemesterId !== applied.semesterId
+    || filterStatus !== applied.status
+
+  function applyFilters() {
+    setPage(1)
+    setApplied({ date: filterDate, lecturerId: filterLecturerId, semesterId: filterSemesterId, status: filterStatus })
+  }
+
+  function clearFilters() {
+    setFilterDate("")
+    setFilterLecturerId("")
+    setFilterSemesterId("")
+    setFilterStatus("")
+    setPage(1)
+    setApplied({ date: "", lecturerId: "", semesterId: "", status: "" })
+  }
+
+  // ── Pagination ─────────────────────────────────────────────────────────────
+  function goToPage(p: number) {
+    if (p < 1 || p > totalPages) return
+    setPage(p)
+  }
+
+  function pageNumbers(): (number | "…")[] {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+    const pages: (number | "…")[] = [1]
+    if (page > 3) pages.push("…")
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i)
+    if (page < totalPages - 2) pages.push("…")
+    pages.push(totalPages)
+    return pages
+  }
+
+  // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full pb-8">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <span className="bg-blue-100 text-blue-600 px-2.5 py-0.5 rounded text-xs font-bold">
-              Đang diễn ra
-            </span>
-            <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
-              <Clock size={14} />
-              <span>08:00 - 10:30, Hôm nay</span>
+    <div className="flex flex-col w-full pb-10" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* PAGE TITLE */}
+      <div className="mb-6">
+        <h1 className="text-[22px] font-medium text-[#185FA5]">Danh sách buổi học</h1>
+      </div>
+
+      {/* ── STAT CARDS ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-3">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng buổi học</p>
+            <div className="p-2 rounded-md bg-[#185FA5] text-white">
+              <Calendar size={18} strokeWidth={2} />
             </div>
           </div>
-
-          <h1 className="text-2xl font-bold text-slate-800">Lập trình Web Cơ bản (IT3230)</h1>
-
-          <div className="flex items-center gap-1.5 text-slate-500 text-sm font-medium">
-            <MapPin size={16} />
-            <span>Phòng D3-501</span>
-          </div>
+          <h3 className="text-3xl font-medium text-slate-800">{totalCount.toLocaleString()}</h3>
+          {isClientMode && (
+            <p className="text-xs text-slate-400 mt-2 font-normal">Kết quả bộ lọc</p>
+          )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 border border-slate-300 bg-white rounded-md px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-            <Edit3 size={16} />
-            <span>Sửa thủ công</span>
-          </button>
-          <button className="flex items-center gap-2 border border-[#c12a2a] bg-[#c12a2a] rounded-md px-4 py-2 text-sm font-bold text-white hover:bg-[#a52222] transition-colors shadow-sm">
-            <Power size={16} />
-            <span>Kết thúc phiên</span>
-          </button>
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-3">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Đang diễn ra</p>
+            <div className="p-2 rounded-md bg-blue-50 text-blue-600 border border-blue-100">
+              <Radio size={18} strokeWidth={2} />
+            </div>
+          </div>
+          <h3 className="text-3xl font-medium text-blue-600">{liveCount}</h3>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-3">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Sắp diễn ra</p>
+            <div className="p-2 rounded-md bg-amber-50 text-amber-600 border border-amber-100">
+              <Clock size={18} strokeWidth={2} />
+            </div>
+          </div>
+          <h3 className="text-3xl font-medium text-amber-600">{upcomingCount}</h3>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-start mb-3">
+            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Đã kết thúc</p>
+            <div className="p-2 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100">
+              <CheckCircle2 size={18} strokeWidth={2} />
+            </div>
+          </div>
+          <h3 className="text-3xl font-medium text-emerald-600">{doneCount}</h3>
         </div>
       </div>
 
-      {/* MAIN GRID - 12 COLUMNS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
 
-        {/* LEFT COLUMN (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
+        {/* ── FILTER BAR ─────────────────────────────────────────────────────── */}
+        <div className="p-4 border-b border-slate-100">
+          <div className="flex flex-wrap items-end gap-3">
 
-          {/* QR Code Section */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col items-center">
-            <div className="w-full flex justify-between items-center mb-6">
-              <h3 className="font-bold text-slate-800">Quét mã để điểm danh</h3>
-              <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-2 py-1 rounded-full text-xs font-bold text-blue-600">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                Trực tiếp
-              </div>
+            {/* Ngày học */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600">Ngày học</label>
+              <input
+                type="date"
+                value={filterDate}
+                onChange={e => setFilterDate(e.target.value)}
+                className="h-9 px-3 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5] min-w-[160px]"
+              />
             </div>
 
-            {/* Fake QR Image */}
-            <div className="w-48 h-48 border-4 border-slate-800 p-2 mb-6 rounded-sm relative flex flex-col justify-between">
-              <div className="flex justify-between h-1/3">
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-                <div className="w-12 h-full bg-slate-800"></div>
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-              </div>
-              <div className="flex justify-between h-1/4">
-                <div className="w-full h-4 border-4 border-slate-800 my-auto"></div>
-              </div>
-              <div className="flex justify-between h-1/3">
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-                <div className="w-8 h-full bg-slate-800 ml-4"></div>
-                <div className="w-12 h-12 border-4 border-slate-800"></div>
-              </div>
+            {/* Giảng viên */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600">Giảng viên phụ trách</label>
+              <select
+                value={filterLecturerId}
+                onChange={e => setFilterLecturerId(e.target.value)}
+                className="h-9 px-3 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5] min-w-[220px]"
+              >
+                <option value="">-- Tất cả giảng viên --</option>
+                {lecturers.map(l => (
+                  <option key={l.id} value={String(l.id)}>
+                    {l.ho_ten} ({l.ma_giang_vien})
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <p className="text-sm font-medium text-slate-500 mb-2">Mã xác thực hiện tại</p>
-            <div className="w-full bg-slate-100/80 border border-slate-200 rounded-lg py-3 text-center mb-6">
-              <span className="text-4xl font-black text-[#1e325c] tracking-widest">842 911</span>
+            {/* Kì học */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600">Kì học</label>
+              <select
+                value={filterSemesterId}
+                onChange={e => setFilterSemesterId(e.target.value)}
+                className="h-9 px-3 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5] min-w-[200px]"
+              >
+                <option value="">-- Tất cả kì học --</option>
+                {semesters.map(s => (
+                  <option key={s.id} value={String(s.id)}>
+                    {s.ten_ky}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="w-full flex items-center justify-between border border-slate-200 bg-slate-50 rounded-md px-4 py-3 text-sm font-medium text-slate-600">
-              <div className="flex items-center gap-2">
-                <Clock size={16} className="text-slate-400" />
-                <span>Làm mới sau:</span>
-              </div>
-              <span className="font-bold text-slate-800">00:15</span>
+            {/* Trạng thái */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-slate-600">Trạng thái</label>
+              <select
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="h-9 px-3 border border-slate-200 rounded-lg text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5] min-w-[170px]"
+              >
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="sap_dien_ra">Sắp diễn ra</option>
+                <option value="dang_dien_ra">Đang diễn ra</option>
+                <option value="da_ket_thuc">Đã kết thúc</option>
+                <option value="huy">Đã hủy</option>
+              </select>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={applyFilters}
+                className={`h-9 px-4 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${
+                  hasInputDirty
+                    ? "bg-[#185FA5] hover:bg-[#1254a0]"
+                    : "bg-[#185FA5]/70 hover:bg-[#185FA5]"
+                }`}
+              >
+                <Filter size={14} />
+                Lọc kết quả
+              </button>
+              {hasApplied && (
+                <button
+                  onClick={clearFilters}
+                  className="h-9 px-3 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 text-sm rounded-lg flex items-center gap-1.5 transition-colors"
+                >
+                  <X size={14} />
+                  Xóa bộ lọc
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Anti-cheat Settings */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col">
-            <div className="flex items-center gap-2 mb-5">
-              <ShieldCheck size={20} className="text-[#007082]" />
-              <h3 className="font-bold text-slate-800">Cài đặt chống gian lận</h3>
+          {/* Active filter chips */}
+          {hasApplied && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {applied.date && (
+                <span className="inline-flex items-center gap-1.5 bg-[#185FA5]/10 text-[#185FA5] text-xs px-2.5 py-1 rounded-full font-medium">
+                  <Calendar size={11} />
+                  {applied.date}
+                </span>
+              )}
+              {applied.lecturerId && (
+                <span className="inline-flex items-center gap-1.5 bg-[#185FA5]/10 text-[#185FA5] text-xs px-2.5 py-1 rounded-full font-medium">
+                  GV: {lecturers.find(l => String(l.id) === applied.lecturerId)?.ho_ten ?? "—"}
+                </span>
+              )}
+              {applied.semesterId && (
+                <span className="inline-flex items-center gap-1.5 bg-[#185FA5]/10 text-[#185FA5] text-xs px-2.5 py-1 rounded-full font-medium">
+                  {semesters.find(s => String(s.id) === applied.semesterId)?.ten_ky ?? "—"}
+                </span>
+              )}
+              {applied.status && (
+                <span className="inline-flex items-center gap-1.5 bg-[#185FA5]/10 text-[#185FA5] text-xs px-2.5 py-1 rounded-full font-medium">
+                  {statusLabel(applied.status)}
+                </span>
+              )}
             </div>
-
-            <div className="flex flex-col gap-5">
-              {/* Setting 1 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Kiểm tra GPS</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Yêu cầu SV trong bán kính 50m</p>
-                </div>
-                {/* Custom Toggle ON */}
-                <div className="w-10 h-5 bg-[#007082] rounded-full relative cursor-pointer flex-shrink-0">
-                  <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
-                </div>
-              </div>
-
-              <div className="h-px w-full bg-slate-100"></div>
-
-              {/* Setting 2 */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Chỉ cho phép Wi-Fi trường</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Bắt buộc dùng: HUST_Student</p>
-                </div>
-                {/* Custom Toggle OFF */}
-                <div className="w-10 h-5 bg-slate-200 rounded-full relative cursor-pointer flex-shrink-0">
-                  <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5 shadow-sm border border-slate-200"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          )}
         </div>
 
-        {/* RIGHT COLUMN (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
+        {error && (
+          <div className="p-4 bg-red-50 border-b border-red-100 text-sm text-red-600">{error}</div>
+        )}
 
-          {/* STATS CARDS */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-[#1e325c] flex items-center justify-center text-white shrink-0">
-                <Users size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Tổng sĩ số</p>
-                <h3 className="text-2xl font-bold text-slate-800">120</h3>
-              </div>
+        {/* ── TABLE ───────────────────────────────────────────────────────────── */}
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="py-16 flex flex-col items-center gap-2 text-slate-400">
+              <Loader2 size={28} className="animate-spin" />
+              <span className="text-sm font-normal">Đang tải danh sách buổi học...</span>
             </div>
-
-            <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                <UserCheck size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Đã điểm danh</p>
-                <h3 className="text-2xl font-bold text-slate-800">85</h3>
-              </div>
+          ) : displaySessions.length === 0 ? (
+            <div className="py-16 text-center text-sm text-slate-400 font-normal">
+              {hasApplied
+                ? "Không tìm thấy buổi học phù hợp với bộ lọc."
+                : "Không có buổi học nào."}
             </div>
-
-            <div className="bg-white border border-slate-200 border-l-4 border-l-amber-500 rounded-xl p-5 shadow-sm flex items-center justify-between">
-              <div className="h-12 w-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                <AlertTriangle size={20} />
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Cảnh báo GPS</p>
-                <h3 className="text-2xl font-bold text-slate-800">3</h3>
-              </div>
-            </div>
-          </div>
-
-          {/* LIST TABLE */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h3 className="font-bold text-slate-800 text-lg">Danh sách điểm danh (Live)</h3>
-              <div className="relative w-full sm:w-64">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={16} className="text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-md text-sm bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#007082] focus:border-[#007082]"
-                  placeholder="Tìm MSSV hoặc Tên..."
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="text-xs uppercase text-slate-500 bg-slate-50/50 border-b border-slate-100">
-                  <tr>
-                    <th className="px-6 py-4 font-bold tracking-wider">MSSV</th>
-                    <th className="px-6 py-4 font-bold tracking-wider">Họ và Tên</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Thời gian</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Trạng thái</th>
-                    <th className="px-6 py-4 font-bold tracking-wider text-center">Xác thực GPS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {mockLiveStudents.map((student, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-700">{student.mssv}</td>
-                      <td className="px-6 py-4 font-bold text-slate-800">{student.name}</td>
-                      <td className="px-6 py-4 text-center font-medium">{student.time}</td>
-                      <td className="px-6 py-4 text-center">
-                        {student.status === "PRESENT" ? (
-                          <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-xs font-bold">
-                            Có mặt
-                          </span>
-                        ) : (
-                          <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full text-xs font-bold">
-                            Đi muộn
-                          </span>
-                        )}
+          ) : (
+            <table className="w-full text-left text-sm text-slate-600">
+              <thead className="text-[11px] uppercase text-slate-500 bg-slate-50/80 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 font-medium tracking-wider">Môn học</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Ngày học</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Thời gian</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Phòng</th>
+                  <th className="px-6 py-4 font-medium tracking-wider">Mã lớp</th>
+                  <th className="px-6 py-4 font-medium tracking-wider text-center">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {displaySessions.map(s => {
+                  const dot = STATUS_DOT[s.trang_thai] ?? "bg-slate-400"
+                  const sessionDate = parseSessionDate(s.ngay_hoc)
+                  const isToday    = toIso(sessionDate) === todayIso
+                  return (
+                    <tr
+                      key={s.id}
+                      className={`hover:bg-slate-50/50 transition-colors ${s.trang_thai === "huy" ? "opacity-50" : ""}`}
+                    >
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-[#185FA5]">{s.ten_hoc_phan || "—"}</p>
                       </td>
-                      <td className="px-6 py-4 text-center flex justify-center">
-                        {student.gpsValid ? (
-                          <CheckCircle2 size={18} className="text-emerald-500" />
-                        ) : (
-                          <MapPinOff size={18} className="text-amber-500" />
-                        )}
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                          isToday ? "bg-[#185FA5] text-white" : "bg-slate-100 text-slate-600"
+                        }`}>
+                          {fmtDate(sessionDate)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-1.5 font-medium text-slate-600">
+                          <Clock size={13} className="text-slate-400" />
+                          {s.gio_bat_dau.slice(0, 5)} – {s.gio_ket_thuc.slice(0, 5)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="flex items-center gap-1.5 text-slate-700 font-normal">
+                          <MapPin size={13} className="text-slate-400 shrink-0" />
+                          {s.ten_phong ?? <span className="text-slate-300">—</span>}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                          {s.ma_lop}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                          {statusLabel(s.trang_thai)}
+                        </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* ── PAGINATION ──────────────────────────────────────────────────────── */}
+        {!loading && totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-sm text-slate-500 font-normal">
+              Trang{" "}
+              <span className="font-medium text-slate-700">{page}</span>
+              {" / "}
+              <span className="font-medium text-slate-700">{totalPages}</span>
+              {" · "}
+              {totalCount.toLocaleString()} buổi học
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => goToPage(1)}
+                disabled={page === 1}
+                className="w-9 h-9 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronsLeft size={14} />
+              </button>
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
+                className="w-9 h-9 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {pageNumbers().map((p, idx) =>
+                p === "…" ? (
+                  <span key={`e${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p as number)}
+                    className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
+                      p === page
+                        ? "bg-[#185FA5] text-white"
+                        : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="w-9 h-9 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => goToPage(totalPages)}
+                disabled={page >= totalPages}
+                className="w-9 h-9 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronsRight size={14} />
+              </button>
             </div>
           </div>
-
-        </div>
+        )}
       </div>
     </div>
   )
