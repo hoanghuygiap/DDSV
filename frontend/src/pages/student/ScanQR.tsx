@@ -1168,17 +1168,52 @@ export default function ScanQR() {
     rafRef.current = requestAnimationFrame(tick)
   }
 
+  // async function handleQrData(raw: string) {
+  //   stopCamera()
+
+  //   let token = ""
+  //   let session_id = 0
+
+  //   try {
+  //     const payload = JSON.parse(raw)
+
+  //     token = payload.token
+  //     session_id = Number(payload.session_id)
+
+  //     if (!token || !Number.isFinite(session_id)) {
+  //       throw new Error()
+  //     }
+  //   } catch {
+  //     setErrorMsg("QR không đúng định dạng. Hãy thử quét lại.")
+  //     setScanState("error")
+  //     return
+  //   }
+
+  //   await submitAttendance(token, session_id)
+  // }
   async function handleQrData(raw: string) {
-    stopCamera()
+  stopCamera()
 
-    let token = ""
-    let session_id = 0
+  let token = ""
+  let session_id = 0
 
+  // QR dạng JSON
+  try {
+    const payload = JSON.parse(raw)
+
+    token = payload.token
+    session_id = Number(payload.session_id)
+
+    if (!token || !Number.isFinite(session_id)) {
+      throw new Error()
+    }
+  } catch {
+    // QR dạng URL
     try {
-      const payload = JSON.parse(raw)
+      const url = new URL(raw)
 
-      token = payload.token
-      session_id = Number(payload.session_id)
+      token = url.searchParams.get("token") || ""
+      session_id = Number(url.searchParams.get("session_id"))
 
       if (!token || !Number.isFinite(session_id)) {
         throw new Error()
@@ -1188,9 +1223,10 @@ export default function ScanQR() {
       setScanState("error")
       return
     }
-
-    await submitAttendance(token, session_id)
   }
+
+  await submitAttendance(token, session_id)
+}
 
   async function submitAttendance(token: string, session_id: number) {
     setScanState("processing")

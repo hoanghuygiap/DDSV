@@ -733,7 +733,7 @@ export default function LiveAttendanceQR() {
 
                       <div>
                         <h4 className="text-sm font-medium text-slate-800">{sv.student_name}</h4>
-                        <p className="text-xs text-slate-500">Mã SV: {sv.sinh_vien_id}</p>
+                        <p className="text-xs text-slate-500">Mã SV: {sv.ma_sinh_vien}</p>
                       </div>
                     </div>
 
