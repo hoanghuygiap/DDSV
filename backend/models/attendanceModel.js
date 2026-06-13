@@ -392,25 +392,46 @@ class AttendanceModel {
         return rows;
     }
 
-    static async realtime(sessionId) {
-        const [rows] = await db.query(
-            `
-            SELECT 
-                dd.sinh_vien_id,
-                sv.ho_ten AS student_name,
-                dd.thoi_gian AS checked_in_at,
-                'qr' AS method,
-                dd.trang_thai,
-                dd.hop_le
-            FROM diem_danh dd
-            JOIN sinh_vien sv ON dd.sinh_vien_id = sv.id
-            WHERE dd.buoi_hoc_id = ?
-            ORDER BY dd.thoi_gian DESC
-            `,
-            [sessionId]
-        );
+    // static async realtime(sessionId) {
+    //     const [rows] = await db.query(
+    //         `
+    //         SELECT 
+    //             dd.sinh_vien_id,
+    //             sv.ho_ten AS student_name,
+    //             dd.thoi_gian AS checked_in_at,
+    //             'qr' AS method,
+    //             dd.trang_thai,
+    //             dd.hop_le
+    //         FROM diem_danh dd
+    //         JOIN sinh_vien sv ON dd.sinh_vien_id = sv.id
+    //         WHERE dd.buoi_hoc_id = ?
+    //         ORDER BY dd.thoi_gian DESC
+    //         `,
+    //         [sessionId]
+    //     );
 
-        return rows;
+    //     return rows;
+    // }
+    static async realtime(sessionId) {
+    const [rows] = await db.query(
+        `
+        SELECT 
+            dd.sinh_vien_id,
+            sv.ma_sinh_vien,
+            sv.ho_ten AS student_name,
+            dd.thoi_gian AS checked_in_at,
+            'qr' AS method,
+            dd.trang_thai,
+            dd.hop_le
+        FROM diem_danh dd
+        JOIN sinh_vien sv ON dd.sinh_vien_id = sv.id
+        WHERE dd.buoi_hoc_id = ?
+        ORDER BY dd.thoi_gian DESC
+        `,
+        [sessionId]
+    );
+
+         return rows;
     }
 
     static async saveQrLog(data) {
