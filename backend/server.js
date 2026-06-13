@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+
+const cron = require('node-cron');
+const WarningService = require('./services/warningService');//tự 
 const authRoutes = require('./routes/authRoutes');// Auth - đăng nhập, đăng ký, quên mật khẩu, đổi mật khẩu
 const userRoutes = require('./routes/userRoutes');// User - quản lý tài khoản người dùng
 const roleRoutes = require('./routes/roleRoutes');// Role - quản lý vai trò, phân quyền
@@ -70,4 +73,18 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
+});
+
+cron.schedule('0 0 * * * *', async () => {
+    try {
+        console.log('===== AUTO WARNING =====');
+
+        const result = await WarningService.autoGenerateAll();
+
+        console.log(
+            `Đã quét ${result.total_scanned_classes} lớp, tạo ${result.total_created_warnings} cảnh báo`
+        );
+    } catch (error) {
+        console.error('Lỗi auto warning:', error.message);
+    }
 });
