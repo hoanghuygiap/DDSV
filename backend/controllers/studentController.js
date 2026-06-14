@@ -1,4 +1,6 @@
 const StudentService = require('../services/studentService');
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 class StudentController {
     static async getAllStudents(req, res) {
@@ -153,6 +155,47 @@ class StudentController {
             });
         } catch (error) {
             return res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    static async importStudents(req, res) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Vui lòng upload file Excel (.xlsx)'
+                });
+            }
+
+            const workbook = xlsx.readFile(req.file.path);
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rows = xlsx.utils.sheet_to_json(sheet);
+
+            fs.unlinkSync(req.file.path);
+
+            if (rows.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'File Excel không có dữ liệu'
+                });
+            }
+
+            const result = await StudentService.importStudents(rows);
+
+            return res.json({
+                success: true,
+                message: `Import thành công ${result.successCount} sinh viên${result.errors.length > 0 ? `, ${result.errors.length} dòng lỗi` : ''}`,
+                data: result
+            });
+        } catch (error) {
+            if (req.file) {
+                try { fs.unlinkSync(req.file.path); } catch (_) {}
+            }
+            return res.status(400).json({
                 success: false,
                 message: error.message
             });
