@@ -25,6 +25,7 @@ export const MENU_DATA = {
     { id: "dashboard",     label: "Bảng điều khiển",   icon: LayoutDashboard, path: "/dashboard" },
     { id: "schedule",      label: "Thời khóa biểu",    icon: Calendar,        path: "/dashboard/lecturer-schedule" },
     { id: "my_classes",    label: "Lớp của tôi",        icon: Users,           path: "/dashboard/my-classes" },
+    {id: "lecturer-notifications",label: "Thông báo",icon: Bell,path: "/dashboard/lecturer-notifications"},
     { id: "reports",       label: "Báo cáo",            icon: BarChart2,       path: "/dashboard/class-report" },
     { id: "profile",       label: "Hồ sơ",              icon: UserCircle,      path: "/dashboard/profile" },
   ],

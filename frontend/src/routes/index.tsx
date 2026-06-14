@@ -23,6 +23,7 @@ import ClassReportPage from "@/pages/lecturer/ClassReport"
 import StudentReportPage from "@/pages/student/StudentReport"
 import StudentSchedulePage from "@/pages/student/StudentSchedule"
 import ScanQRPage from "@/pages/student/ScanQR"
+import LecturerNotificationsPage from "@/pages/lecturer/LecturerNotifications"
 
 export const router = createBrowserRouter([
   {
@@ -103,9 +104,18 @@ export const router = createBrowserRouter([
         element: <RoleGuard allowed={["lecturer"]}><ClassReportPage /></RoleGuard>,
       },
       {
+          path: "lecturer-notifications",
+          element: (
+            <RoleGuard allowed={["lecturer"]}>
+              <LecturerNotificationsPage />
+            </RoleGuard>
+          ),
+        },
+      {
         path: "student-reports",
         element: <RoleGuard allowed={["student"]}><StudentReportPage /></RoleGuard>,
       },
+      
       {
         path: "student-schedule",
         element: <RoleGuard allowed={["student"]}><StudentSchedulePage /></RoleGuard>,

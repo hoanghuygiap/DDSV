@@ -1,9 +1,9 @@
-const db = require('../config/db');
+const db = require("../config/db");
 
 class CourseClassModel {
-    static async getAll(limit, offset) {
-        const [rows] = await db.query(
-            `
+  static async getAll(limit, offset) {
+    const [rows] = await db.query(
+      `
             SELECT
                 lmh.id,
                 lmh.ma_lop,
@@ -21,44 +21,39 @@ class CourseClassModel {
             ORDER BY lmh.id DESC
             LIMIT ? OFFSET ?
             `,
-            [limit, offset]
-        );
+      [limit, offset],
+    );
 
-        return rows;
-    }
+    return rows;
+  }
 
-    static async countAll() {
-        const [rows] = await db.query(`
+  static async countAll() {
+    const [rows] = await db.query(`
             SELECT COUNT(*) AS total
             FROM lop_mon_hoc
         `);
 
-        return rows[0].total;
-    }
+    return rows[0].total;
+  }
 
-    static async getById(id) {
-        const [rows] = await db.query(
-            `
+  static async getById(id) {
+    const [rows] = await db.query(
+      `
             SELECT *
             FROM lop_mon_hoc
             WHERE id = ?
             `,
-            [id]
-        );
+      [id],
+    );
 
-        return rows[0];
-    }
+    return rows[0];
+  }
 
-    static async create(data) {
-        const {
-            ma_lop,
-            hoc_phan_id,
-            giang_vien_id,
-            ky_hoc_id
-        } = data;
+  static async create(data) {
+    const { ma_lop, hoc_phan_id, giang_vien_id, ky_hoc_id } = data;
 
-        const [result] = await db.query(
-            `
+    const [result] = await db.query(
+      `
             INSERT INTO lop_mon_hoc (
                 ma_lop,
                 hoc_phan_id,
@@ -67,30 +62,20 @@ class CourseClassModel {
             )
             VALUES (?, ?, ?, ?)
             `,
-            [
-                ma_lop,
-                hoc_phan_id,
-                giang_vien_id,
-                ky_hoc_id
-            ]
-        );
+      [ma_lop, hoc_phan_id, giang_vien_id, ky_hoc_id],
+    );
 
-        return {
-            id: result.insertId,
-            ...data
-        };
-    }
+    return {
+      id: result.insertId,
+      ...data,
+    };
+  }
 
-    static async update(id, data) {
-        const {
-            ma_lop,
-            hoc_phan_id,
-            giang_vien_id,
-            ky_hoc_id
-        } = data;
+  static async update(id, data) {
+    const { ma_lop, hoc_phan_id, giang_vien_id, ky_hoc_id } = data;
 
-        const [result] = await db.query(
-            `
+    const [result] = await db.query(
+      `
             UPDATE lop_mon_hoc
             SET
                 ma_lop = ?,
@@ -99,33 +84,27 @@ class CourseClassModel {
                 ky_hoc_id = ?
             WHERE id = ?
             `,
-            [
-                ma_lop,
-                hoc_phan_id,
-                giang_vien_id,
-                ky_hoc_id,
-                id
-            ]
-        );
+      [ma_lop, hoc_phan_id, giang_vien_id, ky_hoc_id, id],
+    );
 
-        return result.affectedRows;
-    }
+    return result.affectedRows;
+  }
 
-    static async delete(id) {
-        const [result] = await db.query(
-            `
+  static async delete(id) {
+    const [result] = await db.query(
+      `
             DELETE FROM lop_mon_hoc
             WHERE id = ?
             `,
-            [id]
-        );
+      [id],
+    );
 
-        return result.affectedRows;
-    }
+    return result.affectedRows;
+  }
 
-    static async getStudents(classId, limit, offset) {
-        const [rows] = await db.query(
-            `
+  static async getStudents(classId, limit, offset) {
+    const [rows] = await db.query(
+      `
             SELECT
                 sv.id,
                 sv.ma_sinh_vien,
@@ -152,84 +131,105 @@ class CourseClassModel {
             ORDER BY sv.ma_sinh_vien ASC
             LIMIT ? OFFSET ?
             `,
-            [classId, classId, classId, classId, classId, classId, classId, classId, limit, offset]
-        );
+      [
+        classId,
+        classId,
+        classId,
+        classId,
+        classId,
+        classId,
+        classId,
+        classId,
+        limit,
+        offset,
+      ],
+    );
 
-        return rows;
-    }
+    return rows;
+  }
 
-    static async countStudents(classId) {
-        const [rows] = await db.query(
-            `
+  static async countStudents(classId) {
+    const [rows] = await db.query(
+      `
             SELECT COUNT(*) AS total
             FROM dang_ky_lop
             WHERE lop_mon_hoc_id = ?
             `,
-            [classId]
-        );
+      [classId],
+    );
 
-        return rows[0].total;
-    }
+    return rows[0].total;
+  }
 
-    static async registerStudent(
-        classId,
-        studentId
-    ) {
-        await db.query(
-            `
+  static async registerStudent(classId, studentId) {
+    await db.query(
+      `
             INSERT INTO dang_ky_lop (
                 lop_mon_hoc_id,
                 sinh_vien_id
             )
             VALUES (?, ?)
             `,
-            [classId, studentId]
-        );
-    }
+      [classId, studentId],
+    );
+  }
 
-    static async unregisterStudent(
-        classId,
-        studentId
-    ) {
-        await db.query(
-            `
+  static async unregisterStudent(classId, studentId) {
+    await db.query(
+      `
             DELETE FROM dang_ky_lop
             WHERE lop_mon_hoc_id = ?
             AND sinh_vien_id = ?
             `,
-            [classId, studentId]
-        );
-    }
+      [classId, studentId],
+    );
+  }
 
-    static async checkRegistered(
-        classId,
-        studentId
-    ) {
-        const [rows] = await db.query(
-            `
+  static async checkRegistered(classId, studentId) {
+    const [rows] = await db.query(
+      `
             SELECT *
             FROM dang_ky_lop
             WHERE lop_mon_hoc_id = ?
             AND sinh_vien_id = ?
             `,
-            [classId, studentId]
-        );
+      [classId, studentId],
+    );
 
-        return rows[0];
-    }
-    static async getStudentByCode(ma_sinh_vien) {
-        const [rows] = await db.query(
-            `
+    return rows[0];
+  }
+  static async getStudentByCode(ma_sinh_vien) {
+    const [rows] = await db.query(
+      `
         SELECT *
         FROM sinh_vien
         WHERE ma_sinh_vien = ?
         AND deleted_at IS NULL
         `,
-            [ma_sinh_vien]
-        );
+      [ma_sinh_vien],
+    );
 
-        return rows[0];
-    }
+    return rows[0];
+  }
+  static async getByLecturer(lecturerId) {
+    const [rows] = await db.query(
+      `
+        SELECT
+            lmh.id,
+            lmh.ma_lop,
+            hp.ma_hoc_phan,
+            hp.ten_hoc_phan
+        FROM lop_mon_hoc lmh
+        JOIN hoc_phan hp
+            ON hp.id = lmh.hoc_phan_id
+        WHERE lmh.giang_vien_id = ?
+        ORDER BY lmh.ma_lop
+        `,
+      [lecturerId],
+    );
+
+    return rows;
+  }
 }
 
 module.exports = CourseClassModel;
