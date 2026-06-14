@@ -15,14 +15,14 @@ class DashboardService {
         return await DashboardModel.getLecturerDashboard(lecturer.id);
     }
 
-    async getStudentDashboard(taiKhoanId) {
+    async getStudentDashboard(taiKhoanId, lopMonHocId = null) {
         const student = await DashboardModel.findStudentByAccountId(taiKhoanId);
 
         if (!student) {
             throw new Error('Không tìm thấy thông tin sinh viên');
         }
 
-        return await DashboardModel.getStudentDashboard(student.id);
+        return await DashboardModel.getStudentDashboard(student.id, lopMonHocId);
     }
 }
 

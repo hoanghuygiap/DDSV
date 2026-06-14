@@ -42,8 +42,9 @@ class DashboardController {
     async getStudentDashboard(req, res) {
         try {
             const taiKhoanId = req.user.id;
+            const { lop_mon_hoc_id } = req.query;
 
-            const data = await DashboardService.getStudentDashboard(taiKhoanId);
+            const data = await DashboardService.getStudentDashboard(taiKhoanId, lop_mon_hoc_id);
 
             return res.status(200).json({
                 success: true,

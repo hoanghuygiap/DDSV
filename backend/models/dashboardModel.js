@@ -177,24 +177,47 @@ class DashboardModel {
         };
     }
 
-    async getStudentDashboard(sinhVienId) {
-        const [[summary]] = await db.query(`
+    async getStudentDashboard(sinhVienId, lopMonHocId = null) {
+        let summarySql = `
             SELECT 
                 COUNT(*) AS total_sessions,
-                SUM(CASE WHEN trang_thai = 'co_mat' THEN 1 ELSE 0 END) AS co_mat,
-                SUM(CASE WHEN trang_thai = 'tre' THEN 1 ELSE 0 END) AS tre,
-                SUM(CASE WHEN trang_thai = 'vang' THEN 1 ELSE 0 END) AS vang,
-                SUM(CASE WHEN trang_thai = 'co_phep' THEN 1 ELSE 0 END) AS co_phep,
+                SUM(CASE WHEN dd.trang_thai = 'co_mat' THEN 1 ELSE 0 END) AS co_mat,
+                SUM(CASE WHEN dd.trang_thai = 'tre' THEN 1 ELSE 0 END) AS tre,
+                SUM(CASE WHEN dd.trang_thai = 'vang' THEN 1 ELSE 0 END) AS vang,
+                SUM(CASE WHEN dd.trang_thai = 'co_phep' THEN 1 ELSE 0 END) AS co_phep,
                 ROUND(
                     IFNULL(
-                        SUM(CASE WHEN trang_thai IN ('co_mat', 'tre') THEN 1 ELSE 0 END)
+                        SUM(CASE WHEN dd.trang_thai IN ('co_mat', 'tre') THEN 1 ELSE 0 END)
                         / NULLIF(COUNT(*), 0) * 100,
                         0
                     ),
                     2
                 ) AS attendance_rate
-            FROM diem_danh
-            WHERE sinh_vien_id = ?
+            FROM diem_danh dd
+        `;
+        const summaryParams = [];
+
+        if (lopMonHocId && lopMonHocId !== 'all') {
+            summarySql += `
+            JOIN buoi_hoc bh ON bh.id = dd.buoi_hoc_id
+            WHERE dd.sinh_vien_id = ? AND bh.lop_mon_hoc_id = ?
+            `;
+            summaryParams.push(sinhVienId, lopMonHocId);
+        } else {
+            summarySql += `
+            WHERE dd.sinh_vien_id = ?
+            `;
+            summaryParams.push(sinhVienId);
+        }
+
+        const [[summary]] = await db.query(summarySql, summaryParams);
+
+        const [enrolledClasses] = await db.query(`
+            SELECT lmh.id, lmh.ma_lop, hp.ten_hoc_phan
+            FROM dang_ky_lop dkl
+            JOIN lop_mon_hoc lmh ON lmh.id = dkl.lop_mon_hoc_id
+            JOIN hoc_phan hp ON hp.id = lmh.hoc_phan_id
+            WHERE dkl.sinh_vien_id = ?
         `, [sinhVienId]);
 
         const [upcomingSessions] = await db.query(`
@@ -245,6 +268,7 @@ class DashboardModel {
                 co_phep: summary.co_phep || 0,
                 attendance_rate: summary.attendance_rate || 0
             },
+            enrolled_classes: enrolledClasses,
             upcoming_sessions: upcomingSessions,
             warnings
         };
