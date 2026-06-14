@@ -1,9 +1,20 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 
 const StudentController = require('../controllers/studentController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { requirePermission } = require('../middleware/roleMiddleware');
+
+const upload = multer({ dest: 'uploads/' });
+
+router.post(
+    '/import',
+    authMiddleware,
+    requirePermission('user.create'),
+    upload.single('file'),
+    StudentController.importStudents
+);
 
 router.get(
     '/',
