@@ -326,13 +326,13 @@ export default function LecturerSchedulePage() {
             </div>
 
             <div className="flex items-center gap-2 ml-2">
-              <button
+              {/* <button
                 onClick={gotoFirstWeek}
                 title="Tuần đầu tiên"
                 className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
               >
                 <ChevronsLeft size={16} />
-              </button>
+              </button> */}
               <button
                 onClick={() => setCurrentWeekStart((w) => addDays(w, -7))}
                 title="Tuần trước"
@@ -353,13 +353,13 @@ export default function LecturerSchedulePage() {
               >
                 <ChevronRight size={16} />
               </button>
-              <button
+              {/* <button
                 onClick={gotoLastWeek}
                 title="Tuần cuối cùng"
                 className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
               >
                 <ChevronsRight size={16} />
-              </button>
+              </button> */}
             </div>
           </div>
 
