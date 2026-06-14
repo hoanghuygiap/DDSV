@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { LecturerService } from "@/services/lecturer.service"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Lecturer } from "@/types/user.type"
@@ -192,21 +192,7 @@ export default function LecturerSchedulePage() {
 
   const weekGrid = useMemo(() => buildWeekGrid(weekSessions, weekDays), [weekSessions, weekDays])
 
-  const gotoFirstWeek = () => {
-    if (semesterSessions.length === 0) return
-    const earliest = semesterSessions.reduce((a, b) =>
-      parseDate(a.ngay_hoc) < parseDate(b.ngay_hoc) ? a : b
-    )
-    setCurrentWeekStart(getMonday(parseDate(earliest.ngay_hoc)))
-  }
 
-  const gotoLastWeek = () => {
-    if (semesterSessions.length === 0) return
-    const latest = semesterSessions.reduce((a, b) =>
-      parseDate(a.ngay_hoc) > parseDate(b.ngay_hoc) ? a : b
-    )
-    setCurrentWeekStart(getMonday(parseDate(latest.ngay_hoc)))
-  }
 
   // ── TKB Thứ-Tiết: group by lop_mon_hoc then by (day, time, room) ──────
   const thuTietData = useMemo(() => {
@@ -292,8 +278,8 @@ export default function LecturerSchedulePage() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key as "tuan" | "thu-tiet")}
             className={`px-6 py-3 text-sm font-medium tracking-wide border-b-2 transition-colors ${activeTab === tab.key
-                ? "border-[#185FA5] text-[#185FA5]"
-                : "border-transparent text-slate-500 hover:text-slate-700"
+              ? "border-[#185FA5] text-[#185FA5]"
+              : "border-transparent text-slate-500 hover:text-slate-700"
               }`}
           >
             {tab.label}
@@ -327,13 +313,6 @@ export default function LecturerSchedulePage() {
 
             <div className="flex items-center gap-2 ml-2">
               <button
-                onClick={gotoFirstWeek}
-                title="Tuần đầu tiên"
-                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
-              >
-                <ChevronsLeft size={16} />
-              </button>
-              <button
                 onClick={() => setCurrentWeekStart((w) => addDays(w, -7))}
                 title="Tuần trước"
                 className="w-9 h-9 flex items-center justify-center border border-slate-300 text-slate-600 rounded hover:bg-slate-50 transition-colors"
@@ -352,13 +331,6 @@ export default function LecturerSchedulePage() {
                 className="w-9 h-9 flex items-center justify-center border border-slate-300 text-slate-600 rounded hover:bg-slate-50 transition-colors"
               >
                 <ChevronRight size={16} />
-              </button>
-              <button
-                onClick={gotoLastWeek}
-                title="Tuần cuối cùng"
-                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
-              >
-                <ChevronsRight size={16} />
               </button>
             </div>
           </div>

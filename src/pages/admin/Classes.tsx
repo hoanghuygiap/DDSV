@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import {
   Search, Book, Users, ChevronLeft, ChevronRight,
-  ChevronsLeft, ChevronsRight, Loader2, Filter, X,
+  ChevronsLeft, ChevronsRight, Loader2, Filter, X, Upload
 } from "lucide-react"
 import api from "@/api/axios"
 
@@ -35,22 +35,25 @@ const PAGE_SIZE = 20
 type AppliedFilters = { keyword: string; semesterId: string }
 
 export default function ClassesPage() {
-  const [classes,    setClasses]    = useState<CourseClass[]>([])
+  const [classes, setClasses] = useState<CourseClass[]>([])
   const [pagination, setPagination] = useState<Pagination>({ total: 0, page: 1, limit: PAGE_SIZE, totalPages: 1 })
-  const [page,       setPage]       = useState(1)
-  const [isLoading,  setIsLoading]  = useState(true)
-  const [error,      setError]      = useState("")
+  const [page, setPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  const [semesters,       setSemesters]       = useState<Semester[]>([])
-  const [inputKeyword,    setInputKeyword]    = useState("")
+  const [semesters, setSemesters] = useState<Semester[]>([])
+  const [inputKeyword, setInputKeyword] = useState("")
   const [inputSemesterId, setInputSemesterId] = useState("")
-  const [applied,         setApplied]         = useState<AppliedFilters>({ keyword: "", semesterId: "" })
+  const [applied, setApplied] = useState<AppliedFilters>({ keyword: "", semesterId: "" })
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importingClassId, setImportingClassId] = useState<number | null>(null)
 
   // Load semester list once
   useEffect(() => {
     api.get("/semesters")
       .then(res => setSemesters(res.data?.data ?? []))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   // Load classes whenever page or applied filters change
@@ -63,7 +66,7 @@ export default function ClassesPage() {
     setError("")
     try {
       const params: Record<string, string | number> = { page: p, limit: PAGE_SIZE }
-      if (appl.keyword)    params.keyword     = appl.keyword
+      if (appl.keyword) params.keyword = appl.keyword
       if (appl.semesterId) params.semester_id = appl.semesterId
 
       const res = await api.get("/course-classes", { params })
@@ -76,6 +79,34 @@ export default function ClassesPage() {
     }
   }
 
+  function handleImportClick(clsId: number) {
+    setImportingClassId(clsId)
+    fileInputRef.current?.click()
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !importingClassId) return
+
+    setIsLoading(true)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      await api.post(`/course-classes/${importingClassId}/import-students`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+      alert("Import sinh viên thành công!")
+      fetchClasses(page, applied)
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Lỗi import sinh viên")
+    } finally {
+      setIsLoading(false)
+      setImportingClassId(null)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
   // Client-side filter fallback (covers cases where API ignores params)
   const filtered = (() => {
     let data = classes
@@ -84,7 +115,7 @@ export default function ClassesPage() {
       data = data.filter(c =>
         c.ma_lop.toLowerCase().includes(q) ||
         (c.ten_hoc_phan ?? "").toLowerCase().includes(q) ||
-        (c.ma_hoc_phan  ?? "").toLowerCase().includes(q) ||
+        (c.ma_hoc_phan ?? "").toLowerCase().includes(q) ||
         (c.ten_giang_vien ?? "").toLowerCase().includes(q)
       )
     }
@@ -95,7 +126,7 @@ export default function ClassesPage() {
     return data
   })()
 
-  const hasApplied    = applied.keyword !== "" || applied.semesterId !== ""
+  const hasApplied = applied.keyword !== "" || applied.semesterId !== ""
   const hasInputDirty = inputKeyword !== applied.keyword || inputSemesterId !== applied.semesterId
 
   function applyFilters() {
@@ -201,11 +232,10 @@ export default function ClassesPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={applyFilters}
-                className={`h-9 px-4 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${
-                  hasInputDirty
-                    ? "bg-[#185FA5] hover:bg-[#1254a0]"
-                    : "bg-[#185FA5]/70 hover:bg-[#185FA5]"
-                }`}
+                className={`h-9 px-4 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${hasInputDirty
+                  ? "bg-[#185FA5] hover:bg-[#1254a0]"
+                  : "bg-[#185FA5]/70 hover:bg-[#185FA5]"
+                  }`}
               >
                 <Filter size={14} />
                 Lọc kết quả
@@ -255,21 +285,22 @@ export default function ClassesPage() {
                 <th className="px-6 py-4 font-medium tracking-wider text-center">Mã GV</th>
                 <th className="px-6 py-4 font-medium tracking-wider text-center">Số SV</th>
                 <th className="px-6 py-4 font-medium tracking-wider">Học kỳ</th>
+                <th className="px-6 py-4 font-medium tracking-wider text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <Loader2 size={28} className="animate-spin" />
-                      <span className="text-sm">Đang tải dữ liệu...</span>
+                      <span className="text-sm">Đang tải...</span>
                     </div>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="py-16 text-center text-sm text-slate-400">
                     {hasApplied ? "Không tìm thấy lớp phù hợp với bộ lọc." : "Chưa có lớp môn học nào."}
                   </td>
                 </tr>
@@ -308,6 +339,15 @@ export default function ClassesPage() {
                         <span className="text-slate-300 text-sm">—</span>
                       )}
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleImportClick(cls.id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-[#185FA5] hover:bg-blue-50 hover:border-blue-200 text-xs font-medium rounded-md transition-colors"
+                        title="Upload file Excel (.xlsx) để import danh sách sinh viên"
+                      >
+                        <Upload size={14} /> Import SV
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -340,9 +380,8 @@ export default function ClassesPage() {
                   <span key={`e${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
                 ) : (
                   <button key={p} onClick={() => goToPage(p as number)}
-                    className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
-                      p === page ? "bg-[#185FA5] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}>
+                    className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${p === page ? "bg-[#185FA5] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+                      }`}>
                     {p}
                   </button>
                 )
@@ -359,6 +398,14 @@ export default function ClassesPage() {
           )}
         </div>
       </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".xlsx, .xls, .csv"
+        className="hidden"
+      />
     </div>
   )
 }

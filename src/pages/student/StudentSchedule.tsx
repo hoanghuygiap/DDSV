@@ -1,19 +1,19 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import api from "@/api/axios"
 import { useAuth } from "@/contexts/AuthContext"
 
 // ─── Tiết schedule (Đại học Thăng Long) ──────────────────────────────────────
 const TIET_INFO = [
-  { tiet: 1,  start: 7  * 60 + 0,  end: 7  * 60 + 50, label: "07:00-07:50" },
-  { tiet: 2,  start: 7  * 60 + 50, end: 8  * 60 + 40, label: "07:50-08:40" },
-  { tiet: 3,  start: 8  * 60 + 40, end: 9  * 60 + 30, label: "08:40-09:30" },
-  { tiet: 4,  start: 9  * 60 + 45, end: 10 * 60 + 35, label: "09:45-10:35" },
-  { tiet: 5,  start: 10 * 60 + 35, end: 11 * 60 + 25, label: "10:35-11:25" },
-  { tiet: 6,  start: 11 * 60 + 25, end: 12 * 60 + 15, label: "11:25-12:15" },
-  { tiet: 7,  start: 13 * 60 + 30, end: 14 * 60 + 20, label: "13:30-14:20" },
-  { tiet: 8,  start: 14 * 60 + 20, end: 15 * 60 + 10, label: "14:20-15:10" },
-  { tiet: 9,  start: 15 * 60 + 30, end: 16 * 60 + 20, label: "15:30-16:20" },
+  { tiet: 1, start: 7 * 60 + 0, end: 7 * 60 + 50, label: "07:00-07:50" },
+  { tiet: 2, start: 7 * 60 + 50, end: 8 * 60 + 40, label: "07:50-08:40" },
+  { tiet: 3, start: 8 * 60 + 40, end: 9 * 60 + 30, label: "08:40-09:30" },
+  { tiet: 4, start: 9 * 60 + 45, end: 10 * 60 + 35, label: "09:45-10:35" },
+  { tiet: 5, start: 10 * 60 + 35, end: 11 * 60 + 25, label: "10:35-11:25" },
+  { tiet: 6, start: 11 * 60 + 25, end: 12 * 60 + 15, label: "11:25-12:15" },
+  { tiet: 7, start: 13 * 60 + 30, end: 14 * 60 + 20, label: "13:30-14:20" },
+  { tiet: 8, start: 14 * 60 + 20, end: 15 * 60 + 10, label: "14:20-15:10" },
+  { tiet: 9, start: 15 * 60 + 30, end: 16 * 60 + 20, label: "15:30-16:20" },
   { tiet: 10, start: 16 * 60 + 20, end: 17 * 60 + 10, label: "16:20-17:10" },
 ]
 
@@ -31,6 +31,7 @@ interface ScheduleItem {
   ten_giang_vien: string | null
   trang_thai_bh: string | null   // session status (dang_dien_ra / sap_dien_ra)
   trang_thai_dd: string | null   // attendance status (co_mat / vang / tre)
+  ten_ky: string | null          // term
 }
 
 type GridCell =
@@ -100,8 +101,8 @@ function buildWeekGrid(items: ScheduleItem[], weekDays: Date[]): Record<number, 
     const dayIdx = weekDays.findIndex((wd) => isSameDate(wd, sessionDate))
     if (dayIdx === -1) continue
     const startTiet = timeToStartTiet(item.gio_bat_dau)
-    const endTiet   = timeToEndTiet(item.gio_ket_thuc)
-    const rowspan   = Math.max(1, endTiet - startTiet + 1)
+    const endTiet = timeToEndTiet(item.gio_ket_thuc)
+    const rowspan = Math.max(1, endTiet - startTiet + 1)
     if (grid[dayIdx][startTiet] !== null) continue  // skip overlaps
     grid[dayIdx][startTiet] = { type: "session", item, startTiet, endTiet, rowspan }
     for (let t = startTiet + 1; t <= endTiet; t++) grid[dayIdx][t] = { type: "skip" }
@@ -110,9 +111,9 @@ function buildWeekGrid(items: ScheduleItem[], weekDays: Date[]): Record<number, 
 }
 
 const DD_BADGE: Record<string, string> = {
-  co_mat:  "bg-emerald-100 text-emerald-700",
-  vang:    "bg-red-100 text-red-600",
-  tre:     "bg-orange-100 text-orange-600",
+  co_mat: "bg-emerald-100 text-emerald-700",
+  vang: "bg-red-100 text-red-600",
+  tre: "bg-orange-100 text-orange-600",
   co_phep: "bg-sky-100 text-sky-700",
 }
 const DD_LABEL: Record<string, string> = {
@@ -123,12 +124,13 @@ const DD_LABEL: Record<string, string> = {
 export default function StudentSchedule() {
   useAuth()
 
-  const [loading, setLoading]   = useState(true)
-  const [error,   setError]     = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [schedule, setSchedule] = useState<ScheduleItem[]>([])
 
-  const [activeTab, setActiveTab]           = useState<"tuan" | "thu-tiet">("tuan")
-  const [currentWeekStart, setWeekStart]    = useState(() => getMonday(new Date()))
+  const [activeTab, setActiveTab] = useState<"tuan" | "thu-tiet">("tuan")
+  const [currentWeekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const [selectedKy, setSelectedKy] = useState<string>("")
 
   // ── Load data ──────────────────────────────────────────────────────────────
   useEffect(() => { load() }, [])
@@ -138,22 +140,23 @@ export default function StudentSchedule() {
     setError("")
     try {
       // 1. Dashboard → sinh_vien_id + upcoming sessions
-      const dash     = await api.get("/dashboard/student")
+      const dash = await api.get("/dashboard/student")
       const dashData = dash.data.data
       const sinhVienId: number | undefined = dashData?.sinh_vien_id
 
       const upcomingRaw: any[] = dashData?.upcoming_sessions ?? []
       const upcoming: ScheduleItem[] = upcomingRaw.map((s: any) => ({
-        id:             s.id,
-        ngay_hoc:       s.ngay_hoc,
-        gio_bat_dau:    s.gio_bat_dau,
-        gio_ket_thuc:   s.gio_ket_thuc,
-        ten_hoc_phan:   s.ten_hoc_phan,
-        ten_phong:      s.ten_phong ?? null,
-        ma_lop:         s.ma_lop,
+        id: s.id,
+        ngay_hoc: s.ngay_hoc,
+        gio_bat_dau: s.gio_bat_dau,
+        gio_ket_thuc: s.gio_ket_thuc,
+        ten_hoc_phan: s.ten_hoc_phan,
+        ten_phong: s.ten_phong ?? null,
+        ma_lop: s.ma_lop,
         ten_giang_vien: s.ten_giang_vien ?? null,
-        trang_thai_bh:  s.trang_thai ?? null,
-        trang_thai_dd:  null,
+        trang_thai_bh: s.trang_thai ?? null,
+        trang_thai_dd: null,
+        ten_ky: s.ten_ky ?? null,
       }))
 
       // 2. Attendance records (past sessions)
@@ -165,16 +168,17 @@ export default function StudentSchedule() {
           })
           const attList: any[] = attRes.data?.data?.data ?? []
           past = attList.map((a: any) => ({
-            id:             a.id,
-            ngay_hoc:       a.ngay_hoc,
-            gio_bat_dau:    a.gio_bat_dau,
-            gio_ket_thuc:   a.gio_ket_thuc,
-            ten_hoc_phan:   a.ten_hoc_phan,
-            ten_phong:      a.ten_phong ?? null,
-            ma_lop:         a.ma_lop,
+            id: a.id,
+            ngay_hoc: a.ngay_hoc,
+            gio_bat_dau: a.gio_bat_dau,
+            gio_ket_thuc: a.gio_ket_thuc,
+            ten_hoc_phan: a.ten_hoc_phan,
+            ten_phong: a.ten_phong ?? null,
+            ma_lop: a.ma_lop,
             ten_giang_vien: null,
-            trang_thai_bh:  null,
-            trang_thai_dd:  a.trang_thai ?? null,
+            trang_thai_bh: null,
+            trang_thai_dd: a.trang_thai ?? null,
+            ten_ky: a.ten_ky ?? null,
           }))
         } catch { /* silent */ }
       }
@@ -184,7 +188,7 @@ export default function StudentSchedule() {
         `${s.ngay_hoc?.split("T")[0]}_${s.gio_bat_dau}_${s.ten_hoc_phan}`
 
       const merged = new Map<string, ScheduleItem>()
-      for (const s of past)     merged.set(key(s), s)
+      for (const s of past) merged.set(key(s), s)
       for (const s of upcoming) {
         const k = key(s)
         if (merged.has(k)) {
@@ -202,6 +206,19 @@ export default function StudentSchedule() {
     }
   }
 
+  const semesters = useMemo(() => Array.from(new Set(schedule.map(s => s.ten_ky).filter(Boolean))) as string[], [schedule])
+
+  useEffect(() => {
+    if (semesters.length > 0 && !selectedKy) {
+      setSelectedKy(semesters[semesters.length - 1])
+    }
+  }, [semesters])
+
+  const filteredSchedule = useMemo(() => {
+    if (!selectedKy) return schedule
+    return schedule.filter(s => s.ten_ky === selectedKy)
+  }, [schedule, selectedKy])
+
   // ── Week ───────────────────────────────────────────────────────────────────
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i)),
@@ -209,31 +226,20 @@ export default function StudentSchedule() {
   )
 
   const weekItems = useMemo(() => {
-    return schedule.filter((s) => {
+    return filteredSchedule.filter((s) => {
       const d = parseDate(s.ngay_hoc)
       return d >= weekDays[0] && d <= addDays(weekDays[6], 1)
     })
-  }, [schedule, weekDays])
+  }, [filteredSchedule, weekDays])
 
   const weekGrid = useMemo(() => buildWeekGrid(weekItems, weekDays), [weekItems, weekDays])
-
-  function gotoFirst() {
-    if (schedule.length === 0) return
-    const earliest = schedule.reduce((a, b) => parseDate(a.ngay_hoc) < parseDate(b.ngay_hoc) ? a : b)
-    setWeekStart(getMonday(parseDate(earliest.ngay_hoc)))
-  }
-  function gotoLast() {
-    if (schedule.length === 0) return
-    const latest = schedule.reduce((a, b) => parseDate(a.ngay_hoc) > parseDate(b.ngay_hoc) ? a : b)
-    setWeekStart(getMonday(parseDate(latest.ngay_hoc)))
-  }
 
   // ── TKB Thứ-Tiết: group by (ma_lop, day_of_week, gio_bat_dau, ten_phong) ─
   const thuTietData = useMemo(() => {
     type SlotKey = string
     // Group by lop_mon_hoc (ma_lop + ten_hoc_phan)
     const byClass = new Map<string, { items: ScheduleItem[] }>()
-    for (const s of schedule) {
+    for (const s of filteredSchedule) {
       const classKey = `${s.ma_lop}||${s.ten_hoc_phan}`
       if (!byClass.has(classKey)) byClass.set(classKey, { items: [] })
       byClass.get(classKey)!.items.push(s)
@@ -248,7 +254,7 @@ export default function StudentSchedule() {
         gv: string | null
       }>()
       for (const s of items) {
-        const d   = parseDate(s.ngay_hoc)
+        const d = parseDate(s.ngay_hoc)
         const dow = d.getDay()
         const sk: SlotKey = `${dow}|${s.gio_bat_dau}|${s.ten_phong ?? ""}`
         if (!slots.has(sk)) {
@@ -265,7 +271,7 @@ export default function StudentSchedule() {
         }
       }
       return {
-        ma_lop:       first.ma_lop,
+        ma_lop: first.ma_lop,
         ten_hoc_phan: first.ten_hoc_phan,
         slots: Array.from(slots.values()).sort((a, b) => {
           const da = a.dayNum === 0 ? 7 : a.dayNum
@@ -307,17 +313,16 @@ export default function StudentSchedule() {
       {/* TABS */}
       <div className="flex border-b border-slate-200 mb-0">
         {[
-          { key: "tuan",     label: "TKB TUẦN" },
+          { key: "tuan", label: "TKB TUẦN" },
           { key: "thu-tiet", label: "TKB THỨ - TIẾT" },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as "tuan" | "thu-tiet")}
-            className={`px-6 py-3 text-sm font-medium tracking-wide border-b-2 transition-colors ${
-              activeTab === tab.key
+            className={`px-6 py-3 text-sm font-medium tracking-wide border-b-2 transition-colors ${activeTab === tab.key
                 ? "border-[#185FA5] text-[#185FA5]"
                 : "border-transparent text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -330,19 +335,25 @@ export default function StudentSchedule() {
           {/* Controls */}
           <div className="flex flex-wrap items-end gap-3 mb-4">
             <div>
+              <select
+                value={selectedKy}
+                onChange={(e) => setSelectedKy(e.target.value)}
+                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]"
+              >
+                <option value="">Tất cả học kỳ</option>
+                {semesters.map((ky) => (
+                  <option key={ky} value={ky}>{ky}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <div className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 min-w-[210px] bg-white">
                 {fmtDate(weekDays[0])} – {fmtDate(weekDays[6])}
               </div>
             </div>
 
             <div className="flex items-center gap-2 ml-2">
-              <button
-                onClick={gotoFirst}
-                title="Tuần đầu tiên"
-                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
-              >
-                <ChevronsLeft size={16} />
-              </button>
               <button
                 onClick={() => setWeekStart((w) => addDays(w, -7))}
                 title="Tuần trước"
@@ -363,13 +374,6 @@ export default function StudentSchedule() {
               >
                 <ChevronRight size={16} />
               </button>
-              <button
-                onClick={gotoLast}
-                title="Tuần cuối cùng"
-                className="w-9 h-9 flex items-center justify-center border border-[#185FA5] bg-[#185FA5] text-white rounded hover:bg-[#1254a0] transition-colors"
-              >
-                <ChevronsRight size={16} />
-              </button>
             </div>
           </div>
 
@@ -387,9 +391,8 @@ export default function StudentSchedule() {
                     return (
                       <th
                         key={i}
-                        className={`border border-[#1254a0] px-2 py-3 text-center font-medium text-xs ${
-                          isToday ? "bg-[#1254a0]" : ""
-                        }`}
+                        className={`border border-[#1254a0] px-2 py-3 text-center font-medium text-xs ${isToday ? "bg-[#1254a0]" : ""
+                          }`}
                       >
                         <div>{DAY_NAMES[i]}</div>
                         <div className={`font-normal text-[11px] mt-0.5 ${isToday ? "text-yellow-300" : "text-blue-200"}`}>
@@ -424,9 +427,8 @@ export default function StudentSchedule() {
                           rowSpan={rowspan}
                           className="border border-[#185FA5]/30 align-top p-0"
                         >
-                          <div className={`h-full border-l-4 border-[#185FA5] p-2 text-[11px] leading-relaxed ${
-                            isOngoing ? "bg-blue-100" : "bg-blue-50"
-                          }`}>
+                          <div className={`h-full border-l-4 border-[#185FA5] p-2 text-[11px] leading-relaxed ${isOngoing ? "bg-blue-100" : "bg-blue-50"
+                            }`}>
                             {isOngoing && (
                               <div className="flex items-center gap-1 mb-1">
                                 <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
@@ -469,6 +471,25 @@ export default function StudentSchedule() {
       {/* ── TKB THỨ - TIẾT ────────────────────────────────────────────────── */}
       {activeTab === "thu-tiet" && (
         <div className="bg-white border border-slate-200 rounded-b-xl rounded-tr-xl shadow-sm p-4">
+          <div className="flex flex-wrap items-end gap-3 mb-4">
+            <div>
+              <select
+                value={selectedKy}
+                onChange={(e) => setSelectedKy(e.target.value)}
+                className="border border-slate-300 rounded px-3 py-1.5 text-sm text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#185FA5] min-w-[180px]"
+              >
+                <option value="">Tất cả học kỳ</option>
+                {semesters.map((ky) => (
+                  <option key={ky} value={ky}>{ky}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {selectedKy && (
+            <div className="text-xs font-medium text-[#185FA5] mb-3 uppercase">
+              Học kỳ: {selectedKy}
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs" style={{ minWidth: 800 }}>
               <thead>
@@ -492,12 +513,12 @@ export default function StudentSchedule() {
                     const rowCount = item.slots.length || 1
                     return item.slots.map((slot, slotIdx) => {
                       const startTiet = timeToStartTiet(slot.batDau)
-                      const endTiet   = timeToEndTiet(slot.ketThuc)
-                      const dow       = slot.dayNum === 0 ? 8 : slot.dayNum  // CN=8
-                      const dayNames  = ["", "", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
-                      const dayName   = dayNames[dow] ?? `Thứ ${dow}`
+                      const endTiet = timeToEndTiet(slot.ketThuc)
+                      const dow = slot.dayNum === 0 ? 8 : slot.dayNum  // CN=8
+                      const dayNames = ["", "", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
+                      const dayName = dayNames[dow] ?? `Thứ ${dow}`
                       const tietRange = startTiet === endTiet ? `${startTiet}` : `${startTiet}-${endTiet}`
-                      const gioHien   = `${tietRange} (${fmtTime(slot.batDau)}–${fmtTime(slot.ketThuc)})`
+                      const gioHien = `${tietRange} (${fmtTime(slot.batDau)}–${fmtTime(slot.ketThuc)})`
                       const tuanRange = `${fmtDate(slot.minDate)} – ${fmtDate(slot.maxDate)}`
 
                       return (

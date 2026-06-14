@@ -10,7 +10,7 @@ import { UserService } from "@/services/user.service"
 import { StudentService, type StudentListItem, type StudentCreatePayload } from "@/services/student.service"
 
 interface Faculty { id: number; ten_khoa: string }
-interface Major   { id: number; ten_nganh: string; khoa_id: number }
+interface Major { id: number; ten_nganh: string; khoa_id: number }
 interface AdminClass { id: number; ten_lop: string; nganh_id: number }
 
 const PAGE_SIZE = 20
@@ -21,42 +21,42 @@ const EMPTY_FORM: StudentCreatePayload & { editMode?: boolean } = {
 export default function StudentsPage() {
   const navigate = useNavigate()
 
-  const [students, setStudents]   = useState<StudentListItem[]>([])
+  const [students, setStudents] = useState<StudentListItem[]>([])
   const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal]         = useState(0)
-  const [page, setPage]           = useState(1)
-  const [keyword, setKeyword]     = useState("")
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [keyword, setKeyword] = useState("")
   const [keywordInput, setKeywordInput] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError]         = useState("")
+  const [error, setError] = useState("")
 
   // Filter options
-  const [faculties, setFaculties]   = useState<Faculty[]>([])
-  const [majors, setMajors]         = useState<Major[]>([])
-  const [classes, setClasses]       = useState<AdminClass[]>([])
+  const [faculties, setFaculties] = useState<Faculty[]>([])
+  const [majors, setMajors] = useState<Major[]>([])
+  const [classes, setClasses] = useState<AdminClass[]>([])
 
   // Active filters
-  const [filterKhoa, setFilterKhoa]     = useState<number | "">("")
-  const [filterNganh, setFilterNganh]   = useState<number | "">("")
-  const [filterLop, setFilterLop]       = useState<number | "">("")
+  const [filterKhoa, setFilterKhoa] = useState<number | "">("")
+  const [filterNganh, setFilterNganh] = useState<number | "">("")
+  const [filterLop, setFilterLop] = useState<number | "">("")
   const [filterStatus, setFilterStatus] = useState<"" | "true" | "false">("")
 
   // Modal thêm / sửa
-  const [showModal, setShowModal]     = useState(false)
-  const [editTarget, setEditTarget]   = useState<StudentListItem | null>(null)
-  const [form, setForm]               = useState(EMPTY_FORM)
-  const [formError, setFormError]     = useState("")
-  const [isSaving, setIsSaving]       = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<StudentListItem | null>(null)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [formError, setFormError] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
 
   // Modal xóa
   const [deleteTarget, setDeleteTarget] = useState<StudentListItem | null>(null)
-  const [isDeleting, setIsDeleting]     = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Modal khóa / mở khóa
-  const [lockTarget, setLockTarget]     = useState<StudentListItem | null>(null)
+  const [lockTarget, setLockTarget] = useState<StudentListItem | null>(null)
   const [unlockTarget, setUnlockTarget] = useState<StudentListItem | null>(null)
-  const [lockMinutes, setLockMinutes]   = useState("15")
-  const [isLocking, setIsLocking]       = useState(false)
+  const [lockMinutes, setLockMinutes] = useState("15")
+  const [isLocking, setIsLocking] = useState(false)
 
   // ─── Load filter options once ────────────────────────────
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function StudentsPage() {
       setFaculties(fRes.data.data ?? [])
       setMajors(mRes.data.data ?? [])
       setClasses(cRes.data.data ?? [])
-    }).catch(() => {/* silent — filters just won't populate */})
+    }).catch(() => {/* silent — filters just won't populate */ })
   }, [])
 
   // ─── Fetch students ──────────────────────────────────────
@@ -77,9 +77,9 @@ export default function StudentsPage() {
     setError("")
     try {
       const res = await StudentService.getList(p, PAGE_SIZE, kw, {
-        khoa_id:   filterKhoa,
-        nganh_id:  filterNganh,
-        lop_id:    filterLop,
+        khoa_id: filterKhoa,
+        nganh_id: filterNganh,
+        lop_id: filterLop,
         kich_hoat: filterStatus,
       })
       setStudents(res.data ?? [])
@@ -111,7 +111,7 @@ export default function StudentsPage() {
 
   // ─── Search ──────────────────────────────────────────────
   const handleSearch = () => { setPage(1); setKeyword(keywordInput) }
-  const clearSearch  = () => { setKeywordInput(""); setKeyword(""); setPage(1) }
+  const clearSearch = () => { setKeywordInput(""); setKeyword(""); setPage(1) }
 
   const clearAllFilters = () => {
     setFilterKhoa("")
@@ -141,10 +141,10 @@ export default function StudentsPage() {
       setFormError("Vui lòng điền đầy đủ các trường bắt buộc."); return
     }
     if (!editTarget) {
-      if (!form.username)     { setFormError("Tên đăng nhập là bắt buộc."); return }
-      if (!form.password)     { setFormError("Mật khẩu là bắt buộc."); return }
+      if (!form.username) { setFormError("Tên đăng nhập là bắt buộc."); return }
+      if (!form.password) { setFormError("Mật khẩu là bắt buộc."); return }
       if (!form.ma_sinh_vien) { setFormError("Mã sinh viên là bắt buộc."); return }
-      if (!form.sdt)          { setFormError("Số điện thoại là bắt buộc."); return }
+      if (!form.sdt) { setFormError("Số điện thoại là bắt buộc."); return }
     }
 
     setIsSaving(true)
@@ -364,6 +364,7 @@ export default function StudentsPage() {
                 <th className="px-6 py-4 font-medium tracking-wider">Mã SV</th>
                 <th className="px-6 py-4 font-medium tracking-wider">Email / SĐT</th>
                 <th className="px-6 py-4 font-medium tracking-wider">Lớp hành chính</th>
+                <th className="px-6 py-4 font-medium tracking-wider text-center">Chuyên cần</th>
                 <th className="px-6 py-4 font-medium tracking-wider text-center">Trạng thái</th>
                 <th className="px-6 py-4 font-medium tracking-wider text-right">Thao tác</th>
               </tr>
@@ -371,7 +372,7 @@ export default function StudentsPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-slate-400">
                       <Loader2 size={28} className="animate-spin" />
                       <span className="text-sm">Đang tải dữ liệu...</span>
@@ -380,7 +381,7 @@ export default function StudentsPage() {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center text-sm text-slate-400">
+                  <td colSpan={7} className="py-16 text-center text-sm text-slate-400">
                     {keyword || activeFilterCount > 0
                       ? "Không tìm thấy sinh viên phù hợp với bộ lọc."
                       : "Chưa có sinh viên nào."}
@@ -422,6 +423,24 @@ export default function StudentsPage() {
 
                       <td className="px-6 py-4 text-sm text-slate-600">
                         {sv.ten_lop || <span className="text-slate-300">—</span>}
+                      </td>
+
+                      <td className="px-6 py-4 text-center font-medium">
+                        {/* @ts-ignore - Backend sẽ trả field chuyen_can sau */}
+                        {sv.chuyen_can !== undefined ? (
+                          <span className={`inline-flex px-2 py-1 rounded-md text-xs border ${
+                            // @ts-ignore
+                            Number(sv.chuyen_can) >= 80 ? "bg-green-50 text-green-700 border-green-200" :
+                              // @ts-ignore
+                              Number(sv.chuyen_can) >= 50 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                "bg-red-50 text-red-700 border-red-200"
+                            }`}>
+                            {/* @ts-ignore */}
+                            {sv.chuyen_can}%
+                          </span>
+                        ) : (
+                          <span className="text-slate-300 text-xs">—</span>
+                        )}
                       </td>
 
                       <td className="px-6 py-4 text-center">
@@ -486,9 +505,8 @@ export default function StudentsPage() {
                 <span key={`e${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-sm">…</span>
               ) : (
                 <button key={p} onClick={() => goToPage(p as number)}
-                  className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${
-                    p === page ? "bg-[#185FA5] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
-                  }`}>
+                  className={`w-9 h-9 flex items-center justify-center rounded text-sm font-medium transition-colors ${p === page ? "bg-[#185FA5] text-white" : "border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}>
                   {p}
                 </button>
               )
@@ -602,9 +620,8 @@ export default function StudentsPage() {
                 <div className="flex gap-2 mb-3">
                   {["15", "30", "60"].map((m) => (
                     <button key={m} onClick={() => setLockMinutes(m)}
-                      className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                        lockMinutes === m ? "bg-amber-500 text-white border-amber-500" : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}>
+                      className={`flex-1 py-1.5 rounded-md text-sm font-medium border transition-colors ${lockMinutes === m ? "bg-amber-500 text-white border-amber-500" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}>
                       {m} phút
                     </button>
                   ))}

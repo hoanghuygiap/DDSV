@@ -48,9 +48,14 @@ interface Pagination {
 const PAGE_SIZE = 15
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function riskBadge(tyLeVang: number | null) {
+function riskBadge(tyLeVang: number | null, isFinished: boolean) {
   const val = tyLeVang ?? 0
-  if (val >= 20) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-600 border border-red-200">⚠ Cấm thi</span>
+  if (val >= 20) {
+    if (isFinished) {
+      return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-600 border border-red-200">⚠ Cấm thi</span>
+    }
+    return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-600 border border-red-200">⚠ Có thể bị cấm thi</span>
+  }
   if (val >= 10) return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-orange-50 text-orange-600 border border-orange-200">Cảnh báo</span>
   return <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Bình thường</span>
 }
@@ -428,7 +433,7 @@ export default function ClassDetail() {
                           <td className="py-3 px-4 text-center">
                             <span className={`text-sm ${vangColor(sv.ty_le_vang)}`}>{rate.toFixed(1)}%</span>
                           </td>
-                          <td className="py-3 px-4">{riskBadge(sv.ty_le_vang)}</td>
+                          <td className="py-3 px-4">{riskBadge(sv.ty_le_vang, summary ? (summary.tong_buoi_da_day >= sv.tong_buoi) : false)}</td>
                           <td className="py-3 px-4">
                             <div className="flex gap-2">
                               <button
@@ -470,7 +475,7 @@ export default function ClassDetail() {
           <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 px-1">
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-sm bg-red-50 border border-red-200 inline-block" />
-              Cấm thi: vắng ≥ 20%
+              Cấm thi / Có thể cấm thi: vắng ≥ 20%
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-sm bg-orange-50 border border-orange-200 inline-block" />

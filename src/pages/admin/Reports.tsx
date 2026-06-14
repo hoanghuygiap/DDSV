@@ -36,8 +36,8 @@ interface WeeklyRow {
 
 const STATUS_MAP = {
     HIGH_RISK: { label: "Nguy cơ cao", cls: "bg-red-50 text-red-600 border border-red-200" },
-    WATCHING:  { label: "Theo dõi",   cls: "bg-[#fff7ed] text-[#ea580c] border border-[#fed7aa]" },
-    NORMAL:    { label: "Bình thường",cls: "bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0]" },
+    WATCHING: { label: "Theo dõi", cls: "bg-[#fff7ed] text-[#ea580c] border border-[#fed7aa]" },
+    NORMAL: { label: "Bình thường", cls: "bg-[#dcfce7] text-[#15803d] border border-[#bbf7d0]" },
 }
 
 function getStatus(absenceRate: number): "NORMAL" | "WATCHING" | "HIGH_RISK" {
@@ -63,7 +63,7 @@ function groupByMonth(rows: WeeklyRow[]) {
         const month = r.ngay_dau_tuan?.slice(0, 7) ?? ""
         if (!month) return
         if (!map[month]) map[month] = { total: 0, co_mat: 0 }
-        map[month].total  += r.tong_buoi
+        map[month].total += r.tong_buoi
         map[month].co_mat += r.co_mat
     })
     return Object.entries(map)
@@ -78,17 +78,17 @@ function groupByMonth(rows: WeeklyRow[]) {
 }
 
 const VI_MONTHS: Record<string, string> = {
-    "01":"Th.1","02":"Th.2","03":"Th.3","04":"Th.4","05":"Th.5","06":"Th.6",
-    "07":"Th.7","08":"Th.8","09":"Th.9","10":"Th.10","11":"Th.11","12":"Th.12",
+    "01": "Th.1", "02": "Th.2", "03": "Th.3", "04": "Th.4", "05": "Th.5", "06": "Th.6",
+    "07": "Th.7", "08": "Th.8", "09": "Th.9", "10": "Th.10", "11": "Th.11", "12": "Th.12",
 }
 const monthLabel = (ym: string) => VI_MONTHS[ym.split("-")[1]] ?? ym
 
 export default function ReportsPage() {
-    const [classData,    setClassData]    = useState<ClassReport[]>([])
-    const [warnings,     setWarnings]     = useState<Warning[]>([])
-    const [totalStudents,setTotalStudents]= useState(0)
+    const [classData, setClassData] = useState<ClassReport[]>([])
+    const [warnings, setWarnings] = useState<Warning[]>([])
+    const [totalStudents, setTotalStudents] = useState(0)
     const [monthlyTrend, setMonthlyTrend] = useState<{ month: string; total: number; present: number; rate: number }[]>([])
-    const [loading,      setLoading]      = useState(true)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         let cancelled = false
@@ -100,25 +100,25 @@ export default function ReportsPage() {
             api.get("/students", { params: { page: 1, limit: 1 } }),
             api.get("/reports/weekly-attendance"),
         ])
-        .then(([classRes, warnRes, stuRes, weekRes]) => {
-            if (cancelled) return
-            if (classRes.status === "fulfilled")
-                setClassData(classRes.value.data.data ?? [])
-            if (warnRes.status === "fulfilled")
-                setWarnings(warnRes.value.data.data?.data ?? [])
-            if (stuRes.status === "fulfilled")
-                setTotalStudents(stuRes.value.data.pagination?.total ?? 0)
-            if (weekRes.status === "fulfilled")
-                setMonthlyTrend(groupByMonth(weekRes.value.data.data ?? []))
-        })
-        .finally(() => { if (!cancelled) setLoading(false) })
+            .then(([classRes, warnRes, stuRes, weekRes]) => {
+                if (cancelled) return
+                if (classRes.status === "fulfilled")
+                    setClassData(classRes.value.data.data ?? [])
+                if (warnRes.status === "fulfilled")
+                    setWarnings(warnRes.value.data.data?.data ?? [])
+                if (stuRes.status === "fulfilled")
+                    setTotalStudents(stuRes.value.data.pagination?.total ?? 0)
+                if (weekRes.status === "fulfilled")
+                    setMonthlyTrend(groupByMonth(weekRes.value.data.data ?? []))
+            })
+            .finally(() => { if (!cancelled) setLoading(false) })
 
         return () => { cancelled = true }
     }, [])
 
     const totalAttendance = classData.reduce((s, r) => s + (Number(r.tong_luot_diem_danh) || 0), 0)
-    const totalPresent    = classData.reduce((s, r) => s + (Number(r.co_mat) || 0), 0)
-    const attendanceRate  = totalAttendance > 0
+    const totalPresent = classData.reduce((s, r) => s + (Number(r.co_mat) || 0), 0)
+    const attendanceRate = totalAttendance > 0
         ? Math.round(totalPresent / totalAttendance * 1000) / 10
         : 0
     const warningCount = warnings.filter(w => !w.processed).length
@@ -126,11 +126,11 @@ export default function ReportsPage() {
     const warningClasses = classData
         .filter(r => Number(r.tong_luot_diem_danh) > 0)
         .map(r => ({
-            id:           r.lop_mon_hoc_id,
-            ma_lop:       r.ma_lop,
+            id: r.lop_mon_hoc_id,
+            ma_lop: r.ma_lop,
             ten_hoc_phan: r.ten_hoc_phan,
-            absenceRate:  Math.round((Number(r.vang) / Number(r.tong_luot_diem_danh)) * 1000) / 10,
-            absentCount:  Number(r.vang),
+            absenceRate: Math.round((Number(r.vang) / Number(r.tong_luot_diem_danh)) * 1000) / 10,
+            absentCount: Number(r.vang),
         }))
         .sort((a, b) => b.absenceRate - a.absenceRate)
         .slice(0, 5)
@@ -139,9 +139,56 @@ export default function ReportsPage() {
         ? Math.min(Math.ceil(Math.max(...monthlyTrend.map(m => m.rate), 1) / 10) * 10 + 10, 100)
         : 100
 
-    const handleExport = () => {
-        const token = localStorage.getItem("access_token")
-        window.open(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:5000"}/reports/export?token=${token}`, "_blank")
+    const handleExport = async () => {
+        try {
+            const res = await api.get("/reports/export", { responseType: "blob" })
+            const url = window.URL.createObjectURL(new Blob([res.data]))
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", `Bao-cao-chuyen-can-${new Date().toISOString().slice(0, 10)}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        } catch (err: any) {
+            console.error(err)
+            if (err.response?.data instanceof Blob) {
+                try {
+                    const text = await err.response.data.text()
+                    const json = JSON.parse(text)
+                    alert("Lỗi: " + (json.message || "Không thể xuất báo cáo"))
+                } catch {
+                    alert("Không thể xuất báo cáo")
+                }
+            } else {
+                alert("Lỗi: " + (err.response?.data?.message || "Không thể xuất báo cáo"))
+            }
+        }
+    }
+
+    const handleExportAttendance = async () => {
+        try {
+            const res = await api.get("/attendance/export-excel", { responseType: "blob" })
+            const url = window.URL.createObjectURL(new Blob([res.data]))
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", `Lich-su-diem-danh-${new Date().toISOString().slice(0, 10)}.xlsx`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        } catch (err: any) {
+            console.error(err)
+            if (err.response?.data instanceof Blob) {
+                try {
+                    const text = await err.response.data.text()
+                    const json = JSON.parse(text)
+                    alert("Lỗi: " + (json.message || "Không thể xuất file"))
+                } catch {
+                    alert("Không thể xuất lịch sử điểm danh")
+                }
+            } else {
+                alert("Lỗi: " + (err.response?.data?.message || "Không thể xuất lịch sử điểm danh"))
+            }
+        }
     }
 
     if (loading) return (
@@ -302,13 +349,22 @@ export default function ReportsPage() {
                         <h3 className="font-medium text-slate-800 text-lg">Chi tiết chuyên cần theo lớp</h3>
                         <p className="text-xs text-slate-500 mt-0.5">Sắp xếp theo tỷ lệ vắng cao nhất</p>
                     </div>
-                    <button
-                        onClick={handleExport}
-                        className="flex items-center gap-2 border border-slate-200 bg-white rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                    >
-                        <Download size={16} />
-                        <span>Xuất báo cáo</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleExportAttendance}
+                            className="flex items-center gap-2 border border-slate-200 bg-white rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                            <Download size={16} />
+                            <span>Lịch sử điểm danh</span>
+                        </button>
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 border border-slate-200 bg-white rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                            <Download size={16} />
+                            <span>Xuất báo cáo</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">

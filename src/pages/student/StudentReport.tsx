@@ -25,6 +25,7 @@ interface AttendanceRecord {
   gio_bat_dau: string
   ten_hoc_phan: string
   ten_phong: string | null
+  ten_ky?: string
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -33,51 +34,43 @@ const PAGE_SIZE = 10
 function fmtDate(d: string) {
   if (!d) return "—"
   const dt = new Date(d)
-  const day   = String(dt.getDate()).padStart(2, "0")
+  const day = String(dt.getDate()).padStart(2, "0")
   const month = String(dt.getMonth() + 1).padStart(2, "0")
-  const year  = dt.getFullYear()
+  const year = dt.getFullYear()
   return `${day}/${month}/${year}`
 }
 
-function monthKey(ngay_hoc: string) {
-  const s = ngay_hoc?.includes("T") ? ngay_hoc.split("T")[0] : ngay_hoc
-  return s?.slice(0, 7) ?? ""            // "YYYY-MM"
-}
 
-function monthLabel(ym: string) {
-  const [y, m] = ym.split("-")
-  return `Tháng ${parseInt(m)} / ${y}`
-}
 
 function attendanceLabel(rate: number) {
-  if (rate >= 90) return { text: "Tốt",    cls: "bg-[#185FA5] text-white" }
-  if (rate >= 75) return { text: "Khá",    cls: "bg-emerald-600 text-white" }
-  return             { text: "Yếu",    cls: "bg-red-500 text-white" }
+  if (rate >= 90) return { text: "Tốt", cls: "bg-[#185FA5] text-white" }
+  if (rate >= 75) return { text: "Khá", cls: "bg-emerald-600 text-white" }
+  return { text: "Yếu", cls: "bg-red-500 text-white" }
 }
 
 const STATUS_MAP: Record<string, { label: string; badge: string }> = {
-  co_mat:  { label: "Có mặt",   badge: "bg-emerald-50 text-emerald-700 border border-emerald-100" },
-  vang:    { label: "Vắng mặt", badge: "bg-red-50 text-red-600 border border-red-100" },
-  tre:     { label: "Đi muộn",  badge: "bg-orange-50 text-orange-600 border border-orange-100" },
-  co_phep: { label: "Có phép",  badge: "bg-sky-50 text-sky-600 border border-sky-100" },
+  co_mat: { label: "Có mặt", badge: "bg-emerald-50 text-emerald-700 border border-emerald-100" },
+  vang: { label: "Vắng mặt", badge: "bg-red-50 text-red-600 border border-red-100" },
+  tre: { label: "Đi muộn", badge: "bg-orange-50 text-orange-600 border border-orange-100" },
+  co_phep: { label: "Có phép", badge: "bg-sky-50 text-sky-600 border border-sky-100" },
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function StudentReport() {
   const { user } = useAuth()
 
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState("")
-  const [summary, setSummary]     = useState<Summary | null>(null)
-  const [records, setRecords]     = useState<AttendanceRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [records, setRecords] = useState<AttendanceRecord[]>([])
 
   // filters
-  const [monthFilter, setMonth]   = useState("all")
-  const [subjectFilter, setSubj]  = useState("all")
-  const [applied, setApplied]     = useState({ month: "all", subject: "all" })
+  const [termFilter, setTerm] = useState("all")
+  const [subjectFilter, setSubj] = useState("all")
+  const [applied, setApplied] = useState({ term: "all", subject: "all" })
 
   // pagination
-  const [page, setPage]           = useState(1)
+  const [page, setPage] = useState(1)
 
   // ── Load data ──────────────────────────────────────────────────────────────
   useEffect(() => { load() }, [])
@@ -107,8 +100,8 @@ export default function StudentReport() {
   }
 
   // ── Derived filter options ─────────────────────────────────────────────────
-  const months = useMemo(() => {
-    const set = new Set(records.map(r => monthKey(r.ngay_hoc)).filter(Boolean))
+  const terms = useMemo(() => {
+    const set = new Set(records.map(r => r.ten_ky).filter(Boolean) as string[])
     return Array.from(set).sort().reverse()
   }, [records])
 
@@ -120,9 +113,9 @@ export default function StudentReport() {
   // ── Filtered + paginated records ───────────────────────────────────────────
   const filtered = useMemo(() => {
     return records.filter(r => {
-      const okMonth   = applied.month   === "all" || monthKey(r.ngay_hoc) === applied.month
+      const okTerm = applied.term === "all" || r.ten_ky === applied.term
       const okSubject = applied.subject === "all" || r.ten_hoc_phan === applied.subject
-      return okMonth && okSubject
+      return okTerm && okSubject
     })
   }, [records, applied])
 
@@ -130,7 +123,7 @@ export default function StudentReport() {
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   function applyFilter() {
-    setApplied({ month: monthFilter, subject: subjectFilter })
+    setApplied({ term: termFilter, subject: subjectFilter })
     setPage(1)
   }
 
@@ -146,10 +139,10 @@ export default function StudentReport() {
     )
   }
 
-  const rate       = Math.round(summary?.attendance_rate ?? 0)
-  const rateLabel  = attendanceLabel(rate)
-  const totalAbs   = (summary?.vang ?? 0)
-  const totalLate  = (summary?.tre  ?? 0)
+  const rate = Math.round(summary?.attendance_rate ?? 0)
+  const rateLabel = attendanceLabel(rate)
+  const totalAbs = (summary?.vang ?? 0)
+  const totalLate = (summary?.tre ?? 0)
 
   return (
     <div
@@ -227,19 +220,19 @@ export default function StudentReport() {
       {/* ── Filters ─────────────────────────────────────────────────────── */}
       <div className="bg-white border border-slate-200 rounded-xl p-5">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-          {/* Month */}
+          {/* Học kỳ */}
           <div className="md:col-span-2">
             <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wide mb-1.5">
-              Tháng
+              Học kỳ
             </label>
             <select
-              value={monthFilter}
-              onChange={e => setMonth(e.target.value)}
+              value={termFilter}
+              onChange={e => setTerm(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-normal text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#185FA5]/20 focus:border-[#185FA5] transition-shadow"
             >
-              <option value="all">Tất cả các tháng</option>
-              {months.map(m => (
-                <option key={m} value={m}>{monthLabel(m)}</option>
+              <option value="all">Tất cả các học kỳ</option>
+              {terms.map(t => (
+                <option key={t} value={t}>{t}</option>
               ))}
             </select>
           </div>
@@ -383,11 +376,10 @@ export default function StudentReport() {
                   <button
                     key={p}
                     onClick={() => setPage(p as number)}
-                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
-                      page === p
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${page === p
                         ? "bg-[#185FA5] text-white"
                         : "text-slate-500 hover:bg-slate-50 border border-slate-200"
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>

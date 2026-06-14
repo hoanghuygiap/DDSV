@@ -14,6 +14,12 @@ interface DashboardSummary {
   attendance_rate: number
 }
 
+interface EnrolledClass {
+  id: number
+  ma_lop: string
+  ten_hoc_phan: string
+}
+
 interface UpcomingSession {
   id: number
   ngay_hoc: string
@@ -105,10 +111,10 @@ function DonutChart({ rate }: { rate: number }) {
 
 // ─── Status colors (table — plain text, no pill) ──────────────────────────────
 const STATUS_TXT: Record<string, { label: string; color: string }> = {
-  co_mat:  { label: "Có mặt",   color: "text-green-600" },
-  vang:    { label: "Vắng mặt", color: "text-red-500" },
-  tre:     { label: "Đi muộn",  color: "text-amber-600" },
-  co_phep: { label: "Có phép",  color: "text-blue-600" },
+  co_mat: { label: "Có mặt", color: "text-green-600" },
+  vang: { label: "Vắng mặt", color: "text-red-500" },
+  tre: { label: "Đi muộn", color: "text-amber-600" },
+  co_phep: { label: "Có phép", color: "text-blue-600" },
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -116,23 +122,27 @@ export function StudentDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const [loading, setLoading]       = useState(true)
-  const [summary, setSummary]       = useState<DashboardSummary | null>(null)
-  const [todaySessions, setToday]   = useState<UpcomingSession[]>([])
-  const [warnings, setWarnings]     = useState<Warning[]>([])
-  const [recentAtt, setRecentAtt]   = useState<AttendanceRecord[]>([])
-  const [hasAtt, setHasAtt]         = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [todaySessions, setToday] = useState<UpcomingSession[]>([])
+  const [warnings, setWarnings] = useState<Warning[]>([])
+  const [recentAtt, setRecentAtt] = useState<AttendanceRecord[]>([])
+  const [hasAtt, setHasAtt] = useState(false)
 
-  useEffect(() => { load() }, [])
+  const [enrolledClasses, setEnrolledClasses] = useState<EnrolledClass[]>([])
+  const [selectedClass, setSelectedClass] = useState<string>("all")
+
+  useEffect(() => { load() }, [selectedClass]) // Reload when class changes
 
   async function load() {
     setLoading(true)
     try {
       // 1. Dashboard endpoint — tự tìm sinh_vien qua JWT
-      const res  = await api.get("/dashboard/student")
+      const res = await api.get(`/dashboard/student?lop_mon_hoc_id=${selectedClass}`)
       const data = res.data.data
 
       setSummary(data.summary ?? null)
+      setEnrolledClasses(data.enrolled_classes ?? [])
       setWarnings((data.warnings ?? []).filter((w: Warning) => !w.da_xu_ly))
 
       const today = todayISO()
@@ -209,7 +219,21 @@ export function StudentDashboard() {
 
         {/* Tổng quan Điểm danh */}
         <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <p className="text-sm font-medium text-slate-700 mb-4">Tổng quan Điểm danh</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-medium text-slate-700">Tổng quan Điểm danh</p>
+            <select
+              value={selectedClass}
+              onChange={e => setSelectedClass(e.target.value)}
+              className="border border-slate-300 rounded-md px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-[#185FA5]"
+            >
+              <option value="all">Tất cả lớp học</option>
+              {enrolledClasses.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.ma_lop} - {c.ten_hoc_phan}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {summary ? (
             <div className="flex flex-col items-center gap-4">
