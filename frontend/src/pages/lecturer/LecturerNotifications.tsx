@@ -349,7 +349,7 @@ export default function LecturerNotificationsPage() {
   const fetchNotifications = async () => {
     setLoading(true)
     try {
-      const res = await api.get("/notifications")
+      const res = await api.get("/notifications/sent")
       setNotifications(res.data.data?.data ?? res.data.data ?? [])
     } catch (err: any) {
       setError(err.response?.data?.message || "Không thể tải danh sách thông báo.")

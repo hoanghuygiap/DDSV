@@ -9,6 +9,7 @@ router.patch('/read-all', authMiddleware, NotificationController.readAll);
 
 router.get('/', authMiddleware, NotificationController.getMyNotifications);
 router.post('/', authMiddleware, NotificationController.create);
+router.get('/sent', authMiddleware, NotificationController.getSentNotifications);
 router.get('/:id', authMiddleware, NotificationController.getDetail);
 router.patch('/:id/read', authMiddleware, NotificationController.markAsRead);
 router.delete('/:id', authMiddleware, NotificationController.remove);

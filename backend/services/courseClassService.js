@@ -317,6 +317,57 @@ class CourseClassService {
 
     return result;
   }
+    static async getOverview(classId) {
+    const courseClass = await CourseClassModel.getById(classId);
+
+    if (!courseClass) {
+      throw new Error("Lớp môn học không tồn tại");
+    }
+
+    const classInfo = await CourseClassModel.getOverviewClassInfo(classId);
+
+    const students = await CourseClassModel.getStudents(classId, 10000, 0);
+
+    const sessions = await CourseClassModel.getOverviewSessions(classId);
+
+    const tong_sinh_vien = students.length;
+
+    const so_buoi_da_hoc = sessions.filter(
+      (s) =>
+        s.trang_thai === "da_ket_thuc" ||
+        s.trang_thai === "dang_dien_ra",
+    ).length;
+
+    const so_buoi_chua_hoc = sessions.filter(
+      (s) => s.trang_thai === "sap_dien_ra",
+    ).length;
+
+    const totalPresent = sessions.reduce(
+      (sum, s) =>
+        sum + Number(s.so_co_mat || 0) + Number(s.so_tre || 0),
+      0,
+    );
+
+    const totalExpected = tong_sinh_vien * so_buoi_da_hoc;
+
+    const ty_le_chuyen_can =
+      totalExpected > 0
+        ? Math.round((totalPresent / totalExpected) * 100)
+        : 0;
+
+    return {
+      classInfo,
+      students,
+      sessions,
+      summary: {
+        tong_sinh_vien,
+        tong_buoi: sessions.length,
+        so_buoi_da_hoc,
+        so_buoi_chua_hoc,
+        ty_le_chuyen_can,
+      },
+    };
+  }
   static async getMyClasses(accountId) {
     const db = require("../config/db");
 

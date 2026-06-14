@@ -92,7 +92,22 @@ class CourseClassController {
       });
     }
   }
+    static async getOverview(req, res) {
+    try {
+      const data = await CourseClassService.getOverview(req.params.id);
 
+      return res.json({
+        success: true,
+        message: "Lấy tổng quan lớp môn học thành công",
+        data,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
   static async getStudents(req, res) {
     try {
       const { page, limit, offset } = getPagination(req.query);

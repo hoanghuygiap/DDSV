@@ -24,6 +24,7 @@ import StudentReportPage from "@/pages/student/StudentReport"
 import StudentSchedulePage from "@/pages/student/StudentSchedule"
 import ScanQRPage from "@/pages/student/ScanQR"
 import LecturerNotificationsPage from "@/pages/lecturer/LecturerNotifications"
+import AdminClassDetailPage from "@/pages/admin/ClassDetail"
 
 export const router = createBrowserRouter([
   {
@@ -72,6 +73,10 @@ export const router = createBrowserRouter([
       {
         path: "classes",
         element: <RoleGuard allowed={["admin"]}><ClassesPage /></RoleGuard>,
+      },
+      {
+         path: "classes/:id/detail",
+         element: <RoleGuard allowed={["admin"]}><AdminClassDetailPage /></RoleGuard>,
       },
       {
         path: "schedule",

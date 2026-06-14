@@ -26,6 +26,12 @@ router.get(
     requirePermission('course_class.view'),
     CourseClassController.getMyClasses
 );
+router.get(
+    '/:id/overview',
+    authMiddleware,
+    requirePermission('course_class.view'),
+    CourseClassController.getOverview
+);
 
 router.post(
     '/:id/import-students',

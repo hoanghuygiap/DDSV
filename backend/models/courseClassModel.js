@@ -198,6 +198,58 @@ class CourseClassModel {
 
     return rows[0];
   }
+    static async getOverviewClassInfo(classId) {
+    const [rows] = await db.query(
+      `
+      SELECT
+        lmh.id,
+        lmh.ma_lop,
+        hp.ma_hoc_phan,
+        hp.ten_hoc_phan,
+        gv.ma_giang_vien,
+        gv.ho_ten AS ten_giang_vien,
+        kh.ten_ky
+      FROM lop_mon_hoc lmh
+      LEFT JOIN hoc_phan hp ON hp.id = lmh.hoc_phan_id
+      LEFT JOIN giang_vien gv ON gv.id = lmh.giang_vien_id
+      LEFT JOIN ky_hoc kh ON kh.id = lmh.ky_hoc_id
+      WHERE lmh.id = ?
+      `,
+      [classId],
+    );
+
+    return rows[0];
+  }
+
+  static async getOverviewSessions(classId) {
+    const [rows] = await db.query(
+      `
+      SELECT
+        bh.id,
+        bh.ngay_hoc,
+        bh.gio_bat_dau,
+        bh.gio_ket_thuc,
+        bh.trang_thai,
+        COUNT(DISTINCT CASE WHEN dd.trang_thai = 'co_mat' THEN dd.sinh_vien_id END) AS so_co_mat,
+        COUNT(DISTINCT CASE WHEN dd.trang_thai = 'tre' THEN dd.sinh_vien_id END) AS so_tre,
+        COUNT(DISTINCT CASE WHEN dd.trang_thai = 'vang' THEN dd.sinh_vien_id END) AS so_vang,
+        COUNT(DISTINCT CASE WHEN dd.trang_thai = 'co_phep' THEN dd.sinh_vien_id END) AS so_co_phep
+      FROM buoi_hoc bh
+      LEFT JOIN diem_danh dd ON dd.buoi_hoc_id = bh.id
+      WHERE bh.lop_mon_hoc_id = ?
+      GROUP BY
+        bh.id,
+        bh.ngay_hoc,
+        bh.gio_bat_dau,
+        bh.gio_ket_thuc,
+        bh.trang_thai
+      ORDER BY bh.ngay_hoc DESC, bh.gio_bat_dau DESC
+      `,
+      [classId],
+    );
+
+    return rows;
+  }
   static async getStudentByCode(ma_sinh_vien) {
     const [rows] = await db.query(
       `
