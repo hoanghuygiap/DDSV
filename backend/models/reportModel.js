@@ -218,64 +218,35 @@ class ReportModel {
         return rows;
     }
 
-    static async exportData(query) {
-        const { ma_lop, ma_sinh_vien, ky_hoc } = query;
+   static async exportData(query) {
+    const { course_class_id } = query;
 
-        let sql = `
-            SELECT
-                sv.ma_sinh_vien,
-                sv.ho_ten AS ten_sinh_vien,
-                lhc.ten_lop AS lop_hanh_chinh,
-                lmh.ma_lop,
-                hp.ma_hoc_phan,
-                hp.ten_hoc_phan,
-                hp.so_tin_chi,
-                ky.ten_ky AS ky_hoc,
-                bh.ngay_hoc,
-                bh.gio_bat_dau,
-                bh.gio_ket_thuc,
-                ph.ten_phong AS phong_hoc,
-                dd.trang_thai,
-                dd.thoi_gian AS thoi_gian_diem_danh,
-                dd.hop_le_gps,
-                dd.hop_le_wifi,
-                dd.hop_le,
-                dd.ghi_chu,
-                tk_gv.ho_ten AS ten_giang_vien
-            FROM diem_danh dd
-            JOIN sinh_vien sv ON dd.sinh_vien_id = sv.id
-            LEFT JOIN lop_hanh_chinh lhc ON sv.lop_id = lhc.id
-            JOIN buoi_hoc bh ON dd.buoi_hoc_id = bh.id
-            JOIN lop_mon_hoc lmh ON bh.lop_mon_hoc_id = lmh.id
-            JOIN hoc_phan hp ON lmh.hoc_phan_id = hp.id
-            JOIN ky_hoc ky ON lmh.ky_hoc_id = ky.id
-            LEFT JOIN phong_hoc ph ON bh.phong_hoc_id = ph.id
-            LEFT JOIN giang_vien gv ON lmh.giang_vien_id = gv.id
-            LEFT JOIN tai_khoan tk_gv ON gv.tai_khoan_id = tk_gv.id
-            WHERE 1 = 1
-        `;
+    if (!course_class_id) {
+        throw new Error('Thiếu course_class_id');
+    }
 
-        const params = [];
+    const [rows] = await db.query(`
+        SELECT
+            sv.id AS sinh_vien_id,
+            sv.ma_sinh_vien,
+            sv.ho_ten AS ten_sinh_vien,
+            hp.ma_hoc_phan,
+            hp.ten_hoc_phan,
+            DATE_FORMAT(bh.ngay_hoc, '%d/%m/%Y') AS ngay_hoc,
+            dd.trang_thai
+        FROM dang_ky_lop dkl
+        JOIN sinh_vien sv ON sv.id = dkl.sinh_vien_id
+        JOIN lop_mon_hoc lmh ON lmh.id = dkl.lop_mon_hoc_id
+        JOIN hoc_phan hp ON hp.id = lmh.hoc_phan_id
+        LEFT JOIN buoi_hoc bh ON bh.lop_mon_hoc_id = lmh.id
+        LEFT JOIN diem_danh dd 
+            ON dd.buoi_hoc_id = bh.id 
+            AND dd.sinh_vien_id = sv.id
+        WHERE lmh.id = ?
+        ORDER BY sv.ma_sinh_vien ASC, bh.ngay_hoc ASC
+    `, [course_class_id]);
 
-        if (ma_lop) {
-            sql += ` AND lmh.ma_lop = ?`;
-            params.push(ma_lop);
-        }
-
-        if (ma_sinh_vien) {
-            sql += ` AND sv.ma_sinh_vien = ?`;
-            params.push(ma_sinh_vien);
-        }
-
-        if (ky_hoc) {
-            sql += ` AND ky.ten_ky = ?`;
-            params.push(ky_hoc);
-        }
-
-        sql += ` ORDER BY bh.ngay_hoc DESC, bh.gio_bat_dau DESC`;
-
-        const [rows] = await db.query(sql, params);
-        return rows;
+    return rows;
     }
 }
 

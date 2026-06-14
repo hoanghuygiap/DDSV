@@ -75,7 +75,7 @@ app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });
 
-cron.schedule('0 0 * * * *', async () => {
+cron.schedule('* * * * *', async () => {
     try {
         console.log('===== AUTO WARNING =====');
 

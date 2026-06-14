@@ -47,6 +47,9 @@ class LecturerModel {
 
         return rows[0];
     }
+    static async getLecturerById(id) {
+    return await this.getById(id);
+    }
 
     //tao acc moi cho giang vien
     static async create(data) {

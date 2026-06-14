@@ -1051,7 +1051,7 @@ export default function NotificationsPage() {
     INFO: "Thông tin",
     WARNING: "Cảnh báo",
     REMINDER: "Nhắc nhở",
-    he_thong: "Hệ thống",
+    he_thong: "Nhà trường",
     lop: "Lớp học",
     ca_nhan: "Cá nhân",
   }

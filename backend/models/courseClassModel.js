@@ -1,31 +1,72 @@
 const db = require("../config/db");
 
 class CourseClassModel {
-  static async getAll(limit, offset) {
-    const [rows] = await db.query(
-      `
-            SELECT
-                lmh.id,
-                lmh.ma_lop,
-                hp.ma_hoc_phan,
-                hp.ten_hoc_phan,
-                gv.ho_ten AS ten_giang_vien,
-                kh.ten_ky
-            FROM lop_mon_hoc lmh
-            LEFT JOIN hoc_phan hp
-                ON lmh.hoc_phan_id = hp.id
-            LEFT JOIN giang_vien gv
-                ON lmh.giang_vien_id = gv.id
-            LEFT JOIN ky_hoc kh
-                ON lmh.ky_hoc_id = kh.id
-            ORDER BY lmh.id DESC
-            LIMIT ? OFFSET ?
-            `,
-      [limit, offset],
-    );
+  // static async getAll(limit, offset) {
+  //   const [rows] = await db.query(
+  //     `
+  //           SELECT
+  //               lmh.id,
+  //               lmh.ma_lop,
+  //               hp.ma_hoc_phan,
+  //               hp.ten_hoc_phan,
+  //               gv.ho_ten AS ten_giang_vien,
+  //               kh.ten_ky
+  //           FROM lop_mon_hoc lmh
+  //           LEFT JOIN hoc_phan hp
+  //               ON lmh.hoc_phan_id = hp.id
+  //           LEFT JOIN giang_vien gv
+  //               ON lmh.giang_vien_id = gv.id
+  //           LEFT JOIN ky_hoc kh
+  //               ON lmh.ky_hoc_id = kh.id
+  //           ORDER BY lmh.id DESC
+  //           LIMIT ? OFFSET ?
+  //           `,
+  //     [limit, offset],
+  //   );
 
-    return rows;
-  }
+  //   return rows;
+  // }
+  static async getAll(limit, offset) {
+  const [rows] = await db.query(
+    `
+    SELECT
+        lmh.id,
+        lmh.ma_lop,
+
+        hp.ma_hoc_phan,
+        hp.ten_hoc_phan,
+
+        gv.ma_giang_vien,
+        gv.ho_ten AS ten_giang_vien,
+
+        kh.ten_ky,
+
+        (
+            SELECT COUNT(*)
+            FROM dang_ky_lop dkl
+            WHERE dkl.lop_mon_hoc_id = lmh.id
+        ) AS so_sinh_vien
+
+    FROM lop_mon_hoc lmh
+
+    LEFT JOIN hoc_phan hp
+        ON lmh.hoc_phan_id = hp.id
+
+    LEFT JOIN giang_vien gv
+        ON lmh.giang_vien_id = gv.id
+
+    LEFT JOIN ky_hoc kh
+        ON lmh.ky_hoc_id = kh.id
+
+    ORDER BY lmh.id DESC
+
+    LIMIT ? OFFSET ?
+    `,
+    [limit, offset]
+  );
+
+  return rows;
+}
 
   static async countAll() {
     const [rows] = await db.query(`
